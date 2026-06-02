@@ -1,0 +1,85 @@
+* { 
+	margin: 0;
+	background-color: black;
+	color: #ffffff;
+ }
+
+body { overflow-x: hidden }
+
+
+.container{
+	--n: 4;
+	display: flex;
+	align-items: center;
+	overflow-y: hidden;
+	width: 300%;
+	height: 100%; 
+	max-height: 100%;
+	transform: translate(calc(var(--tx, 0px) + var(--i, 0)/var(--n)*-100%));	
+}
+
+	iframe{
+		width: 100%;
+		height: 100%; 
+		max-height: 100%;
+	}
+
+	.panel1,.panel2,.panel1{
+		width: 100%;
+	}
+
+	.scrWrp{
+		display: flex; 
+		flex-direction: row; 
+	}
+
+	.scr_lbl{ 
+		color:  #ffffff;
+		font-weight: bold;
+	}
+
+	.sb{ 
+		color:  #ffffff;
+		font-weight: bold;
+		text-align: center;
+		font-size: 1.2rem;
+		border: 3px solid red;
+	}	
+
+	.numpadWrp{ 
+		height: 100%; 
+		max-height: 100%;
+		width: 100%; 
+		z-index: 99; 
+	}
+	
+	.numpadWrp span{ 
+		color: #ffffff;
+		width: 100%;
+		text-align: center;
+	}
+	.numpadWrp tr{
+		width: 100%;
+	}
+	.numpadWrp td{
+		text-align: center;
+	}
+	.np{
+		width: 25%;
+	} 	
+	.numpad_button{ 
+		height: 100%; 
+		width: 100%; 
+	}
+	.sb{
+		font-size: 1.3rem;
+	}	
+
+	#mySVGdartBoard{ 
+		width: 100%; 
+		height: 100%; 
+		max-height: 100%;
+	}
+	
+
+.smooth { transition: transform  calc(var(--f, 1)*.5s) ease-out }

@@ -1,0 +1,143 @@
+<html>
+    <head>
+		<meta charset="utf-8">
+		<title>Jay's d3 dartboard</title>
+		<link rel="stylesheet" type="text/css" href="css/dartBoardTabledL.css">
+		<script src="d3/d3.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=0.9">
+	</head>
+
+	<body>
+
+	<!-- Elements ordered in a table layout for landscape view  
+		each column is 50% of viewport size enabling numpad, dartboard and finlist view
+	-->
+		
+		<div class='container' id="container">
+
+			<table>
+				<tr>
+					<th class="panel1"></th>
+					<th class="panel2"></th>
+					<th class="panel3"></th>
+				</tr>
+
+				<tr class="landscapeRow" >
+					<td>
+						<div class="scrWrp" >
+							<table id="numpad" class="numpadWrp">
+								<tr>
+									<th class="np"></th>
+									<th class="np"></th>
+									<th class="np"></th>
+									<th class="np"></th>
+								</tr>
+								<tr class="numpad_top" >
+									<td><button class="numpad_button" onclick="numPadInput(7)">7</button></td>
+									<td><button class="numpad_button" onclick="numPadInput(8)">8</button></td>
+									<td><button class="numpad_button" onclick="numPadInput(9)">9</button></td>
+									<td colspan=4><span class="sb biggerFont" id="sb"></span></td>
+								</tr>
+
+								<tr class="numpad_mddl" >
+									<td><button class="numpad_button" onclick="numPadInput(4)">4</button></td>
+									<td><button class="numpad_button" onclick="numPadInput(5)">5</button></td>
+									<td><button class="numpad_button" onclick="numPadInput(6)">6</button></td>
+									<td></td>
+								</tr>
+
+								<tr class="numpad_bttm" >
+									<td><button class="numpad_button" onclick="numPadInput(1)">1</button></td>
+									<td><button class="numpad_button" onclick="numPadInput(2)">2</button></td>
+									<td><button class="numpad_button" onclick="numPadInput(3)">3</button></td>
+									<td></td>
+								</tr>
+
+								<tr class="numpad_last" >
+									<td><button class="numpad_button" onclick="numPadInput('d')">&#9003</button></td>
+									<td><button class="numpad_button" onclick="numPadInput(0)">0</button></td>
+									<td><button class="numpad_button" onclick="getNDPData()" class="getNDP">OK</button></td>
+									<td></td>
+								</tr>
+							</table>
+						</div>
+					</td>
+					
+					<td>
+						<div id="mySVGdartBoard"></div>
+					</td>
+					
+					<td>
+						<span>
+							<div id="finTable">
+								<table>
+									<thead>
+										<tr>
+											<th>Dart 1</th>
+											<th>Dart 2</th>
+											<th>Dart 3</th>
+										</tr>                        
+									</thead>
+									<tbody>
+										<tr>
+											<td>B20</td>
+											<td>T17</td>
+											<td>DBL</td>
+										</tr>
+										<tr>
+											<td>T20</td>
+											<td>B11</td>
+											<td>DBL</td>
+										</tr>
+										<tr>
+											<td>SBL</td>
+											<td>T20</td>
+											<td>D18</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</span>
+						<span>
+							<div id="finTableF">
+								<table>
+									<thead>
+										<tr>
+											<th>Dart 1</th>
+											<th>Dart 2</th>
+											<th>Dart 3</th>
+										</tr>                        
+									</thead>
+									<tbody>
+										<tr>
+											<td>B20</td>
+											<td>T17</td>
+											<td>DBL</td>
+										</tr>
+										<tr>
+											<td>T20</td>
+											<td>B11</td>
+											<td>DBL</td>
+										</tr>
+										<tr>
+											<td>SBL</td>
+											<td>T20</td>
+											<td>D18</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</span>
+					</td>
+				</tr>
+			</table>
+
+		</div>
+
+	</body>	
+
+	<script src="js/dartBoard.js"></script>
+	<script src="js/ndp.js"></script>
+	<script src="js/ndpv2.js"></script>
+	
+</html>	

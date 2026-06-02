@@ -1,0 +1,95 @@
+
+
+root,html,body,table, thead, tbody, tr, th, td{
+	border: 			1px solid #FFFFFF !important;
+	border-collapse: 	collapse !important;
+	color: 				#FFFFFF !important;
+	background-color: 	#000000 !important;
+}
+
+.biggerFont{ font-size: 0.75rem; 	}
+.scoreFont{ font-size: 1.5rem; 		}
+
+.pageWrapper{ 
+	display: flex; 
+	flex-direction: row; 
+	text-align: center;
+}
+
+.scrWrp{ background-color: #000000; }
+
+.scr_lbl{ 
+	color: #FFFFFF;
+	font-weight: bold;
+}
+
+#sb{ 
+	color: #FFFFFF;
+	font-weight: bold;
+	text-align: center;
+	border: 3px solid red;
+	width: 100%;
+	padding: 0px 15px 0px 15px;
+}
+
+.numPadTable{ 
+	/* 
+		height: 60%; 
+		width: 100%; 
+	*/
+	z-index: 99; 
+}
+
+.numPadTable span{ 
+	color: #FFFFFF;
+	width: 100%;
+	text-align: center;
+}
+
+.numPadTable td{ text-align: center; }
+
+.numpad_button{ 
+	height: 100%; 
+	width: 100%; 
+}
+
+.dihBttn{
+	height: 100%; 
+	width: 100%; 	
+}
+
+.dbWrp{ 
+	width: 45%; 
+	min-width: 225px;
+	height: 40%;
+	min-height: 225px;
+	margin-right: 0;
+}
+
+#mySVGdartBoard{ 
+	width: 40%; 
+	min-width: 200px;
+	height: 40%;
+	min-height: 200px;
+	margin-right: 0;
+}
+
+
+.finTable > tr > td{
+	background-color: #000000 !important;
+	color: #FFFFFF !important;
+}
+
+
+/* 
+	.finBtnWrp{ display: none; }
+	#msgCenter{ display: none; }
+	.dart1{	fill: "#6600FF";}
+	.dart2{	fill: "#6633FF";}
+	.dart3{	fill: "#6666FF";}
+*/
+
+#finTableDart1,#finTableDart2,#finTableDart3{
+	margin-right: auto;
+	margin-left: 33%;
+}
