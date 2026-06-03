@@ -1,355 +1,173 @@
 <!DOCTYPE html>
-<html>
+<html lang = "en">
 	<head>
-		<title>Jay's d3 dartboard</title>
-		<link rel="stylesheet" type="text/css" href="css/01main.css">
-		<script src="d3/d3.min.js"></script>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=0.9">
+		<meta charset = "utf-8">
+		<meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+		<title>DFC 1.0.1</title>
+		<!-- 2026-06-02 19h00 -->
+		<link rel = "stylesheet" type = "text/css" href = "DFC.css">
+		<script src = "appState.js" defer></script>
+		<script src = "checkoutEngine.js" defer></script>
+		<script src = "svgDartBoard.js" defer></script>
+		<script src = "ui.js" defer></script>
 	</head>
 
-	<body id="bod">
-	<!--
-		- numpad
-		- reset button
+	<body id = "pageBody">
+		<main class = "pageWrapper">
+			<section class = "controlPanel" aria-label = "Score controls">
+				<table class = "numPadTable" id = "numPad">
+					<thead>
+						<tr>
+							<th class = "scoreCell" colspan = "3">
+								<span class = "scoreFont" id = "scoreDisplay">000</span>
+							</th>
+						</tr>
+					</thead>
 
-		- score display
-		- dih display
-		- dartboard (3 dih)
-		- finTable (3 dih)
+					<tbody>
+						<tr>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "7">7</button></td>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "8">8</button></td>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "9">9</button></td>
+						</tr>
 
-		- score display
-		- dih display
-		- dartboard (2 dih)
-		- finTable (2 dih)
+						<tr>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "4">4</button></td>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "5">5</button></td>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "6">6</button></td>
+						</tr>
 
-		- score display
-		- dih display
-		- dartboard (1 dih)
-		- finTable (1 dih)
-	-->
+						<tr>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "1">1</button></td>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "2">2</button></td>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "3">3</button></td>
+						</tr>
 
-	<!-- -->
-		<div class="pageWrapper">
-		<!-- flex vertical -->
+						<tr>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "delete">&#9003;</button></td>
+							<td><button class = "numPadButton" type = "button" data-numpad-value = "0">0</button></td>
+							<td><button class = "numPadButton" type = "button" id = "btnScoreOk">OK</button></td>
+						</tr>
 
-			<div class="scrWrp" >
-			<!-- flex vertical -->
+						<tr>
+							<td colspan = "3">
+								<button class = "wideButton" type = "button" id = "btnResetBoards">Reset dartboards</button>
+							</td>
+						</tr>
 
-				<table class="numPadTable" id="numpad">
-					<tr>
-						<th class="np" colspan=3><span class="sb scoreFont" id="sb">000</span></th>
-					</tr>
+						<tr>
+							<td colspan = "3">
+								<button class = "wideButton dihButton" type = "button" id = "btnDih3" data-dih = "3">3 DIH</button>
+							</td>
+						</tr>
 
-					<tr class="numpad_top" >
-						<td><button class="numpad_button" onclick="numPadInput(7)">7</button></td>
-						<td><button class="numpad_button" onclick="numPadInput(8)">8</button></td>
-						<td><button class="numpad_button" onclick="numPadInput(9)">9</button></td>
-					</tr>
+						<tr>
+							<td colspan = "3">
+								<button class = "wideButton dihButton" type = "button" id = "btnDih2" data-dih = "2">2 DIH</button>
+							</td>
+						</tr>
 
-					<tr class="numpad_mddl" >
-						<td><button class="numpad_button" onclick="numPadInput(4)">4</button></td>
-						<td><button class="numpad_button" onclick="numPadInput(5)">5</button></td>
-						<td><button class="numpad_button" onclick="numPadInput(6)">6</button></td>
-					</tr>
+						<tr>
+							<td colspan = "3">
+								<button class = "wideButton dihButton" type = "button" id = "btnDih1" data-dih = "1">1 DIH</button>
+							</td>
+						</tr>
 
-					<tr class="numpad_bttm" >
-						<td><button class="numpad_button" onclick="numPadInput(1)">1</button></td>
-						<td><button class="numpad_button" onclick="numPadInput(2)">2</button></td>
-						<td><button class="numpad_button" onclick="numPadInput(3)">3</button></td>
-					</tr>
+						<tr>
+							<td colspan = "3">
+								<div class = "finalScoreBox">
+									<span>Final</span>
+									<span class = "scoreFont" id = "scoreFinal">0</span>
+								</div>
+							</td>
+						</tr>
 
-					<tr class="numpad_last" >
-						<td><button class="numpad_button" onclick="numPadInput('d')">&#9003</button></td>
-						<td><button class="numpad_button" onclick="numPadInput(0)">0</button></td>
-						<td><button class="numpad_button" onclick="getNDPData()" class="getNDP">OK</button></td>
-					</tr>
+						<tr>
+							<th colspan = "3">Fav Double</th>
+						</tr>
 
-					<tr>
-						<td colspan="3">
-							<button id="btnShowNormal" onclick="createDBforTarget('mySVGdartBoardDart1'),createDBforTarget('mySVGdartBoardDart2'),createDBforTarget('mySVGdartBoardDart3')"> Reset dartboard</button>
-						</td>
-					</tr>
-					<tr>
-						<td colspan="3">
-							<button id="btnDart1" class="dihBttn" onclick="setDIH(3)"> 3 DIH </button>
+						<tr>
+							<td id = "favD1">D20</td>
+							<td id = "favD2">D16</td>
+							<td id = "favD3">D18</td>
+						</tr>
 
-						</td>
-					</tr>
-					<tr>
-						<td colspan="3">
-							<button id="btnDart1" class="dihBttn" onclick="setDIH(2)"> 2 DIH </button>
-						</td>
-					</tr>
-					<tr>
-						<td colspan="3">
-							<button id="btnDart1" class="dihBttn" onclick="setDIH(1)"> 1 DIH </button>
-						</td>
-					</tr>
+						<tr>
+							<th colspan = "3">Fav Treble</th>
+						</tr>
 
-					<tr>
-						<td colspan="3">
-							<span id="scrFinal">0</span>
-						</td>
-					</tr>
-
-					<tr>
-						<td>
-							<div>
-								<tr>
-									<th colspan=3>Fav Double</th>
-								</tr>
-								<tr>
-									<td id=favD1 >Fav Double 1</td>
-									<td id=favD2 >Fav Double 2</td>
-									<td id=favD3 >Fav Double 3</td>
-								</tr>
-								<tr>
-									<th colspan=3>Fav Treble</th>
-								</tr>
-								<tr>
-									<td id=favT1 >Fav Treble 1</td>
-									<td id=favT2 >Fav Treble 2</td>
-									<td id=favT3 >Fav Treble 3</td>
-								</tr>
-							</div>
-						</td>
-					</tr>
-
+						<tr>
+							<td id = "favT1">T20</td>
+							<td id = "favT2">T19</td>
+							<td id = "favT3">T18</td>
+						</tr>
+					</tbody>
 				</table>
+			</section>
 
-			</div>
+			<section class = "boardsPanel" aria-label = "Dartboards">
+				<article class = "dartBoardCard" id = "dartCard1" data-dart-index = "0">
+					<header class = "dartBoardHeader">
+						<h2>Dart 1</h2>
+						<div class = "scoreBeforeBox">
+							<span>Before</span>
+							<span class = "scoreFont" id = "scoreBeforeDart1">0</span>
+						</div>
+					</header>
 
-			<div class="dbWrp">
-				<div style="top:1px;">
-					<span id="scrBfrDart1" class="scoreFont">0</span>
-				</div>
-				<div id="mySVGdartBoardDart1"></div>
-				<div>
-					<span id="segD1">DNT</span>
-					<span id="valD1">0</span>
-					<span id="scrAftrDart1"></span>
-				</div>
-				<div id="finTableDart1">
-					<table class="finTableDart1"></table>
-				</div>
-			</div>
+					<div class = "dartBoardTarget" id = "dartBoard1" aria-label = "Dartboard for dart 1"></div>
 
-			<div class="dbWrp">
-				<div style="top:1px;">
-					<span id="scrBfrDart2" class="scoreFont">0</span>
-				</div>
-				<div id="mySVGdartBoardDart2"></div>
-				<div>
-					<span id="segD2">DNT</span>
-					<span id="valD2">0</span>
-					<span id="scrAftrDart2"></span>
-				</div>
-				<div id="finTableDart2">
-					<table class="finTableDart2"></table>
-				</div>
-			</div>
+					<div class = "dartResultLine">
+						<span class = "segmentLabel" id = "segmentDart1">DNT</span>
+						<span class = "segmentValue" id = "valueDart1">0</span>
+						<span class = "scoreAfter" id = "scoreAfterDart1"></span>
+					</div>
 
-			<div class="dbWrp">
-				<div style="top:1px;">
-					<span id="scrBfrDart3" class="scoreFont">0</span>
-				</div>
-				<div id="mySVGdartBoardDart3"></div>
-				<div>
-					<span id="segD3">DNT</span>
-					<span id="valD3">0</span>
-					<span id="scrAftrDart3"></span>
-				</div>
-				<div id="finTableDart3">
-					<table class="finTableDart1"></table>
-				</div>
-			</div>
+					<div class = "finishTableWrapper" id = "finishTableDart1"></div>
+				</article>
 
-			<div id="msgCenter"></div>
+				<article class = "dartBoardCard" id = "dartCard2" data-dart-index = "1">
+					<header class = "dartBoardHeader">
+						<h2>Dart 2</h2>
+						<div class = "scoreBeforeBox">
+							<span>Before</span>
+							<span class = "scoreFont" id = "scoreBeforeDart2">0</span>
+						</div>
+					</header>
 
-		</div>
+					<div class = "dartBoardTarget" id = "dartBoard2" aria-label = "Dartboard for dart 2"></div>
 
+					<div class = "dartResultLine">
+						<span class = "segmentLabel" id = "segmentDart2">DNT</span>
+						<span class = "segmentValue" id = "valueDart2">0</span>
+						<span class = "scoreAfter" id = "scoreAfterDart2"></span>
+					</div>
+
+					<div class = "finishTableWrapper" id = "finishTableDart2"></div>
+				</article>
+
+				<article class = "dartBoardCard" id = "dartCard3" data-dart-index = "2">
+					<header class = "dartBoardHeader">
+						<h2>Dart 3</h2>
+						<div class = "scoreBeforeBox">
+							<span>Before</span>
+							<span class = "scoreFont" id = "scoreBeforeDart3">0</span>
+						</div>
+					</header>
+
+					<div class = "dartBoardTarget" id = "dartBoard3" aria-label = "Dartboard for dart 3"></div>
+
+					<div class = "dartResultLine">
+						<span class = "segmentLabel" id = "segmentDart3">DNT</span>
+						<span class = "segmentValue" id = "valueDart3">0</span>
+						<span class = "scoreAfter" id = "scoreAfterDart3"></span>
+					</div>
+
+					<div class = "finishTableWrapper" id = "finishTableDart3"></div>
+				</article>
+			</section>
+
+			<section class = "messagePanel" id = "messagePanel" aria-label = "Messages"></section>
+		</main>
 	</body>
-
 </html>
-
-<script type="text/javascript">
-	let lr = '\n' ;
-
-	const colorPairs =  [
-		{ c1:"#FF00FF", c2: "#FF00FF" },
-		{ c1:"#FF6633", c2: "#FF6633" },
-		{ c1:"#FF9966", c2: "#FF9966" },
-		{ c1:"#0066FF", c2: "#0066FF" },
-		{ c1:"#00CCFF", c2: "#00CCFF" }
-	];
-
-	const dartColors = [
-		"inherit",
-		"#6600FF",
-		"#6633FF",
-		"#6666FF"
-	];
-
-	const ndpSeg = {
-		SegId: "",
-		NextDartsNeeded: 9,
-		ScoreAfterDart: 501,
-		NewColor: "#000000"
-	}
-
-	const favDbls = [
-		{ seg:"D20", val: 40, favWeight:40 },
-		{ seg:"D16", val: 32, favWeight:35 },
-		{ seg:"D18", val: 36, favWeight:25 }
-	];
-
-	document.getElementById( 'favD1' ).innerText = favDbls[0].seg ;
-	document.getElementById( 'favD2' ).innerText = favDbls[1].seg ;
-	document.getElementById( 'favD3' ).innerText = favDbls[2].seg ;
-
-	const favTrpls = [
-		{ seg:"T20", val: 60, favWeight:40 },
-		{ seg:"T19", val: 57, favWeight:50 },
-		{ seg:"T18", val: 54, favWeight:10 }
-	];
-
-	document.getElementById( 'favT1' ).innerText = favTrpls[0].seg ;
-	document.getElementById( 'favT2' ).innerText = favTrpls[1].seg ;
-	document.getElementById( 'favT3' ).innerText = favTrpls[2].seg ;
-
-
-	const clrArr = [
-		"#006400",  /* DarkGreen	same darts needed 	*/
-		"#00FF00",  /* lime			-1 darts needed 	*/
-		"#FFAB00",  /* orange		+1 darts needed 	*/
-		"#FF0000"   /* red 			bust ! 				*/
-	];
-
-	const finTableHdrs = [
-		"Diff",
-		"Dart 1",
-		"Dart 2",
-		"Dart 3"
-	];
-
-	const dbDivs = [
-		"mySVGdartBoardDart1",
-		"mySVGdartBoardDart2",
-		"mySVGdartBoardDart3"
-	];
-
-	const scrBfrSpans = [
-		'scrBfrDart1',
-		'scrBfrDart2',
-		'scrBfrDart3',
-		'scrFinal'
-	];
-
-	const finTableIds = [
-		'finTableDart0',
-		'finTableDart1',
-		'finTableDart2',
-		'finTableDart3'
-	];
-
-	let ndpSegArray = [];
-	let scores = [] ;
-	let jsonSegArr = [] ;
-
-	let numpadDiv 		= d3.select('#numpad') ;
-	let cnst_SB_Element = document.getElementById('sb') ;
-	let mySvgMsgCntr 	= d3.select("#msgCenter") ;
-	let curMsgArr 		= d3.selectAll(".dbMsgGrp") ;
-
-	cnst_SB = ()=>{ return parseInt( cnst_SB_Element.innerText ); }
-	let dbSize 	= 300 ;
-	let bodSize = document.getElementById("bod").offsetWidth ;
-	if( parseInt(bodSize/4)){dbSize=parseInt(bodSize/4); }
-	console.log( "bodSize:", bodSize, "dbSize:", dbSize, "dbSizeCalc:", parseInt( bodSize / 4 ) ) ;
-
-	getDartVal = (dartNr)=>{
-		let dvElements = [ "NA", "valD1", "valD2", "valD3" ] ;
-		return parseInt( document.getElementById( dvElements[dartNr] ).innerText );
-	}
-
-	getSegVal = (dartNr)=>{
-		let dvElements = [ "NA", "segD1", "segD2", "segD3" ] ;
-		return document.getElementById( dvElements[dartNr] ).innerText;
-	}
-
-	getSBs = (dartNr)=>{
-		return parseInt( document.getElementById( scrBfrSpans[dartNr] ).innerText ) ;
-	}
-
-	let scoresArrJsonPath 	= "data/scores.json" ;
-	let segArrJsonPath 		= "data/jsonDartBoard102.json" ;
-
-</script>
-
-<script src="js/loadJsons.js"></script>
-
-<script type="text/javascript">
-	const allPromise = 	Promise.all([ getSegArrData(), getScoresData() ]) ;
-	allPromise.then(
-		( values )=>{
-			jsonSegArr 	= values[0] ;
-			scores 		= values[1] ;
-			console.log(
-				"allPromise.then >",
-				"--values: ", 		values.length,
-				"--jsonSegArr: ", 	jsonSegArr.length,
-				"--scores: ", 		scores.length
-	);})
-	.catch(
-		( error )=>{ console.log(error); }
-	);
-
-	segArrayMultiFilter = ( segMulti = 2 )=>{
-		let fltrdArr = [];
-		for(s=0;s<jsonSegArr.length;s++){ if( parseInt( jsonSegArr[s].SegMulti ) == segMulti ){ fltrdArr.push( jsonSegArr[s] );} }
-		return fltrdArr ;
-		/* console.log("segArrayMultiFilter| segMulti: ", segMulti, "fltrdArr: ", fltrdArr.length ) ; */
-	}
-
-
-</script>
-
-<script src="js/dartBoard.js"></script>
-<script src="js/ndp.js"></script>
-<script src="js/allFinishes.js"></script>
-
-<script type="text/javascript">
-	updateScores = ()=>{
-		// scrBfrSpans
-		d1SB 	= cnst_SB() 	;
-		d1val 	= getDartVal(1) ;
-		document.getElementById( scrBfrSpans[0] ).innerText = d1SB.toString() ;
-
-		d2SB 	= d1SB - d1val ;
-		d2val 	= getDartVal(2) ;
-		document.getElementById( scrBfrSpans[1] ).innerText = d2SB.toString() ;
-
-		d3SB 	= d2SB - d2val ;
-		d3val 	= getDartVal(3) ;
-		document.getElementById( scrBfrSpans[2] ).innerText = d3SB.toString() ;
-
-		dfinal = d3SB - d3val ;
-		document.getElementById( scrBfrSpans[3] ).innerText = dfinal.toString() ;
-
-		console.log("updateScores: 1: --SB: ", d1SB, "--val: ", d1val ) ;
-		console.log("updateScores: 2: --SB: ", d2SB, "--val: ", d2val ) ;
-		console.log("updateScores: 3: --SB: ", d3SB, "--val: ", d3val ) ;
-		console.log("updateScores: final: --dfinal: ", dfinal ) ;
-		loopThreeDarts(dfinal) ;
-	}
-
-
-</script>
-
-<!--
-	<div class="finBtnWrp">
-		<button id="btnFinLstAll" onclick="makeFinList()"> Show finishes using favorite Doubles</button>
-		<button id="btnFinLstFav" onclick="pathWithFav()"> Show finishes using favorite Triples</button>
-	</div>
--->

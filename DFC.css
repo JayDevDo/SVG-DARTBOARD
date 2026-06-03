@@ -1,0 +1,381 @@
+/* =============================================================================
+	DFC.css
+	Version 1.0.1
+	2026-06-02 19h00
+============================================================================= */
+
+:root{
+	--page-bg: #000000;
+	--panel-bg: #080808;
+	--panel-bg-alt: #111111;
+	--text-main: #FFFFFF;
+	--text-soft: #CCCCCC;
+	--line-main: #FFFFFF;
+	--line-soft: #444444;
+	--button-bg: #202020;
+	--button-bg-hover: #303030;
+	--button-border: #777777;
+	--score-border: #FF0000;
+	--accent-blue: #99CCFF;
+	--accent-purple-1: #6600FF;
+	--accent-purple-2: #6633FF;
+	--accent-purple-3: #6666FF;
+	--danger: #FF0000;
+}
+
+*{
+	box-sizing: border-box;
+}
+
+html,
+body{
+	min-height: 100%;
+	margin: 0;
+	padding: 0;
+	background-color: var(--page-bg);
+	color: var(--text-main);
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+body{
+	overflow-x: auto;
+}
+
+button{
+	font: inherit;
+	color: var(--text-main);
+	background-color: var(--button-bg);
+	border: 1px solid var(--button-border);
+	cursor: pointer;
+}
+
+button:hover{
+	background-color: var(--button-bg-hover);
+}
+
+button:active{
+	transform: translateY(1px);
+}
+
+table{
+	border-collapse: collapse;
+	color: var(--text-main);
+	background-color: var(--panel-bg);
+}
+
+th,
+td{
+	border: 1px solid var(--line-main);
+	padding: 4px;
+	text-align: center;
+}
+
+.scoreFont{
+	font-size: 1.5rem;
+	font-weight: bold;
+}
+
+.pageWrapper{
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 8px;
+	width: 100%;
+	min-width: 980px;
+	padding: 8px;
+	background-color: var(--page-bg);
+}
+
+/* =============================================================================
+	Control panel
+============================================================================= */
+
+.controlPanel{
+	flex: 0 0 180px;
+	background-color: var(--panel-bg);
+}
+
+.numPadTable{
+	width: 180px;
+	table-layout: fixed;
+	z-index: 99;
+}
+
+.scoreCell{
+	padding: 8px 4px;
+}
+
+#scoreDisplay{
+	display: inline-block;
+	width: 100%;
+	padding: 4px 10px;
+	border: 3px solid var(--score-border);
+	color: var(--text-main);
+	background-color: var(--page-bg);
+	text-align: center;
+}
+
+.numPadButton,
+.wideButton{
+	width: 100%;
+	min-height: 34px;
+}
+
+.numPadButton{
+	font-size: 1rem;
+}
+
+.wideButton{
+	padding: 7px 4px;
+}
+
+.dihButton{
+	font-weight: bold;
+}
+
+.finalScoreBox{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+}
+
+#scoreFinal{
+	min-width: 60px;
+}
+
+/* =============================================================================
+	Board layout
+============================================================================= */
+
+.boardsPanel{
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 8px;
+	flex: 1 1 auto;
+}
+
+.dartBoardCard{
+	flex: 1 1 0;
+	min-width: 245px;
+	max-width: 430px;
+	background-color: var(--panel-bg);
+	border: 1px solid var(--line-soft);
+	padding: 6px;
+	text-align: center;
+}
+
+.dartBoardHeader{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	min-height: 42px;
+	margin-bottom: 4px;
+}
+
+.dartBoardHeader h2{
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: bold;
+	color: var(--text-main);
+}
+
+.scoreBeforeBox{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	min-width: 72px;
+	color: var(--text-soft);
+}
+
+.scoreBeforeBox .scoreFont{
+	color: var(--text-main);
+}
+
+.dartBoardTarget{
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	min-height: 225px;
+	background-color: #000000;
+}
+
+.dartBoardTarget svg{
+	display: block;
+	width: 100%;
+	height: 100%;
+	background-color: #000000;
+}
+
+.dartBoardTarget path{
+	cursor: pointer;
+}
+
+.dartBoardTarget path:hover{
+	stroke: #FFFFFF;
+	stroke-width: 1;
+}
+
+.dartResultLine{
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	align-items: center;
+	gap: 4px;
+	min-height: 28px;
+	margin-top: 4px;
+	border: 1px solid var(--line-soft);
+	background-color: var(--panel-bg-alt);
+}
+
+.segmentLabel,
+.segmentValue,
+.scoreAfter{
+	padding: 4px;
+	font-weight: bold;
+}
+
+.segmentLabel{
+	color: var(--accent-blue);
+}
+
+.segmentValue{
+	color: var(--text-main);
+}
+
+.scoreAfter{
+	color: var(--text-soft);
+}
+
+/* =============================================================================
+	Finish tables
+============================================================================= */
+
+.finishTableWrapper{
+	margin-top: 6px;
+	overflow-x: auto;
+}
+
+.finishTableWrapper table{
+	width: 100%;
+	font-size: 0.85rem;
+}
+
+.finishTableWrapper th,
+.finishTableWrapper td{
+	padding: 3px 4px;
+	border-color: var(--line-soft);
+}
+
+.finishTableWrapper th{
+	background-color: var(--panel-bg-alt);
+	color: var(--text-main);
+}
+
+.finishTableWrapper td{
+	background-color: var(--page-bg);
+	color: var(--text-main);
+}
+
+/* =============================================================================
+	Messages
+============================================================================= */
+
+.messagePanel{
+	flex: 0 0 220px;
+	min-height: 40px;
+	max-height: 90vh;
+	overflow-y: auto;
+	background-color: var(--panel-bg);
+	border: 1px solid var(--line-soft);
+	padding: 6px;
+	color: var(--text-soft);
+	font-size: 0.85rem;
+}
+
+.messagePanel:empty{
+	display: none;
+}
+
+.messageLine{
+	margin-bottom: 6px;
+	padding-bottom: 6px;
+	border-bottom: 1px solid var(--line-soft);
+}
+
+/* =============================================================================
+	Selection states
+============================================================================= */
+
+.dartBoardCard[data-selected = "true"]{
+	border-color: var(--accent-blue);
+}
+
+.dart1Selected{
+	fill: var(--accent-purple-1) !important;
+}
+
+.dart2Selected{
+	fill: var(--accent-purple-2) !important;
+}
+
+.dart3Selected{
+	fill: var(--accent-purple-3) !important;
+}
+
+.isHidden{
+	display: none !important;
+}
+
+/* =============================================================================
+	Responsive
+============================================================================= */
+
+@media (max-width: 1100px){
+	.pageWrapper{
+		min-width: 0;
+		flex-wrap: wrap;
+	}
+
+	.controlPanel{
+		flex: 0 0 180px;
+	}
+
+	.boardsPanel{
+		flex: 1 1 calc(100% - 200px);
+	}
+
+	.messagePanel{
+		flex: 1 1 100%;
+	}
+}
+
+@media (max-width: 760px){
+	.pageWrapper{
+		flex-direction: column;
+	}
+
+	.controlPanel,
+	.numPadTable{
+		width: 100%;
+	}
+
+	.controlPanel{
+		flex: 0 0 auto;
+	}
+
+	.boardsPanel{
+		flex-direction: column;
+		width: 100%;
+	}
+
+	.dartBoardCard{
+		width: 100%;
+		max-width: none;
+	}
+
+	.messagePanel{
+		width: 100%;
+	}
+}
