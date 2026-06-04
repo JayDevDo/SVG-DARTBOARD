@@ -57,7 +57,6 @@ function annularSectorPath( cx, cy, innerRadius, outerRadius, startAngle, endAng
 		"Z"
 	].join(" ") ;
 }
-
 //==============================================================================
 function segmentCenterPoint( cx, cy, radius, startAngle, endAngle ){
 	let midAngle = startAngle + (( endAngle - startAngle ) / 2 ) ;

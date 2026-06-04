@@ -1,8 +1,7 @@
 /*=============================================================================
 	appState.js
-	Version 1.0.1	2026-06-02 19h00
+	Version 1.0.2	2026-06-04
 ============================================================================= */
-
 const SCORES_JSON_PATH = "scores.json" ;
 const SEGMENTS_JSON_PATH = "jsonDartBoard102.json" ;
 const DFC_DEFAULT_SCORE = 121 ;
@@ -26,7 +25,6 @@ const DFC_STATE = {
 	],
 	messages: []
 } ;
-
 //==============================================================================
 async function loadJsonFile( path ){
 	let response = await fetch( path ) ;
@@ -34,10 +32,12 @@ async function loadJsonFile( path ){
 	return await response.json() ;
 }
 //==============================================================================
+function keyJsonArray( jsonArray, keyName ){ for( let item of jsonArray ){ jsonArray[item[keyName]] = item ;} return jsonArray ; }
+//==============================================================================
 async function loadDFCData(){
 	let data = await Promise.all([ loadJsonFile( SCORES_JSON_PATH ), loadJsonFile( SEGMENTS_JSON_PATH ) ]) ;
 	DFC_STATE.scores = data[0] ;
-	DFC_STATE.segments = data[1] ;
+	DFC_STATE.segments = keyJsonArray( data[1], "SegId" ) ;
 	DFC_STATE.dataLoaded = true ;
 	return DFC_STATE ;
 }
@@ -60,39 +60,41 @@ function deleteScoreInputDigit(){
 	DFC_STATE.scoreInput = curScore.slice( 0, -1 ) ;
 }
 //==============================================================================
-function getParsedScoreInput(){let parsedScore = parseInt(DFC_STATE.scoreInput); if(isNaN(parsedScore)){return 0;} return parsedScore;}
+function getParsedScoreInput(){
+	let parsedScore = parseInt( DFC_STATE.scoreInput ) ;
+	if( isNaN( parsedScore ) ){ return 0 ;}
+	return parsedScore ;
+}
 //==============================================================================
-function setStartScore( score ){DFC_STATE.startScore = parseInt( score ) ;resetDarts() ;}
+function setStartScore( score ){ DFC_STATE.startScore = parseInt( score ) ; resetDarts() ; }
 //==============================================================================
-function useScoreInputAsStartScore(){ setStartScore( getParsedScoreInput() ) ; }
-//==============================================================================
-function setDartsInHand( dartsInHand ){DFC_STATE.dartsInHand = parseInt( dartsInHand ) ;resetDartsFrom( DFC_STATE.dartsInHand ) ;}
+function setDartsInHand( dartsInHand ){ DFC_STATE.dartsInHand = parseInt( dartsInHand ) ; resetDartsFrom( DFC_STATE.dartsInHand ) ; }
 //==============================================================================
 function resetDarts(){ DFC_STATE.darts = [ null, null, null ] ; }
 //==============================================================================
-function resetDartsFrom( dartIndex ){for( let i = dartIndex ; i < 3 ; i++ ){ DFC_STATE.darts[i] = null ;}}
+function resetDartsFrom( dartIndex ){ for( let i = dartIndex ; i < 3 ; i++ ){ DFC_STATE.darts[i] = null ;} }
 //==============================================================================
-function setDartSegment( dartIndex, segment ){DFC_STATE.darts[dartIndex] = segment ;resetDartsFrom( dartIndex + 1 ) ;}
+function setDartSegment( dartIndex, segment ){ DFC_STATE.darts[dartIndex] = segment ; resetDartsFrom( dartIndex + 1 ) ; }
 //==============================================================================
 function getDartSegment( dartIndex ){ return DFC_STATE.darts[dartIndex] ; }
 //==============================================================================
-function getDartValue( dartIndex ){if( !DFC_STATE.darts[dartIndex] ){ return 0 ;}return parseInt( DFC_STATE.darts[dartIndex].SegVal ) ;}
+function getDartSegmentName( dartIndex ){
+	let segment = getDartSegment( dartIndex ) ;
+	if( !segment ){ return "DNN" ;}
+	return segment.SegId ;
+}
 //==============================================================================
-function getDartSegmentName( dartIndex ){if( !DFC_STATE.darts[dartIndex] ){ return "DNT" ;}return DFC_STATE.darts[dartIndex].SegId ;}
+function getDartValue( dartIndex ){
+	let segment = getDartSegment( dartIndex ) ;
+	if( !segment ){ return 0 ;}
+	return segment.SegVal ;
+}
 //==============================================================================
-function getSelectedSegmentId( dartIndex ){if( !DFC_STATE.darts[dartIndex] ){ return "" ;}return DFC_STATE.darts[dartIndex].SegId ;}
+function hasDFCData(){ return DFC_STATE.dataLoaded ; }
 //==============================================================================
-function setFavoriteDoubles( favDbls ){ DFC_STATE.favDbls = favDbls ; }
-//==============================================================================
-function setFavoriteTrebles( favTrpls ){ DFC_STATE.favTrpls = favTrpls ; }
+function addMessage( message ){ DFC_STATE.messages.push( message ) ; }
 //==============================================================================
 function clearMessages(){ DFC_STATE.messages = [] ; }
 //==============================================================================
-function addMessage( message ){	DFC_STATE.messages.unshift( message ) ;	if( DFC_STATE.messages.length > 25 ){ DFC_STATE.messages.pop() ;}}
-//==============================================================================
 function getMessages(){ return DFC_STATE.messages ; }
-//==============================================================================
-function getSegmentById( segId ){for( let segment of DFC_STATE.segments ){ if( segment.SegId === segId ){ return segment ;}}return null ;}
-//==============================================================================
-function hasDFCData(){ return DFC_STATE.dataLoaded && DFC_STATE.scores.length > 0 && DFC_STATE.segments.length > 0 ; }
 //==============================================================================

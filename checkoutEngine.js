@@ -1,7 +1,7 @@
 /*=============================================================================
 	checkoutEngine.js
-	Version 1.0.1
-	2026-06-02 19h00
+	Version 1.0.2
+	2026-06-04
 ============================================================================= */
 
 const NDP_COLORS = [
@@ -18,16 +18,18 @@ const MAX_FINISH_ROUTES = 60 ;
 //==============================================================================
 function getScoreRow( score ){
 	let scoreInt = parseInt( score ) ;
-	return DFC_STATE.scores[ scoreInt ] || null ;
+	return DFC_STATE.scores[scoreInt] || null ;
 }
 
 //==============================================================================
 function getDartsNeeded( score ){
 	let scoreInt = parseInt( score ) ;
 	if( scoreInt < 0 || scoreInt === 1 ){ return 99 ;}
-	let scoreRow = getScoreRow( scoreInt ) ;
-	if( !scoreRow ){ return 9 ;}
-	return parseInt( scoreRow.DARTSNEEDED ) ;
+
+	let scoreInfo = DFC_STATE.scores[scoreInt] ;
+	if( !scoreInfo ){ return 9 ;}
+
+	return scoreInfo.DARTSNEEDED ;
 }
 
 //==============================================================================
@@ -35,66 +37,81 @@ function isFinishLive( scoreBefore, dartsInHand ){ return getDartsNeeded( scoreB
 
 //==============================================================================
 function isFinishScore( score ){
-	let scoreRow = getScoreRow( score ) ;
-	if( !scoreRow ){ return false ;}
-	return scoreRow.ISFINISH === true ;
+	let scoreInfo = DFC_STATE.scores[score] ;
+	if( !scoreInfo ){ return false ;}
+
+	return scoreInfo.ISFINISH === true ;
 }
 
 //==============================================================================
 function isBustScore( score ){ return score < 0 || score === 1 ; }
 
 //==============================================================================
+function isSmallSegment( segment ){ return segment.SegInRad === 2 ; }
+
+//==============================================================================
 function getScoreBeforeDart( dartIndex ){
 	let score = DFC_STATE.startScore ;
+
 	for( let i = 0 ; i < dartIndex ; i++ ){ score = score - getDartValue( i ) ;}
+
 	return score ;
 }
 
 //==============================================================================
 function getSegmentAdviceColor( scoreBefore, segment ){
-	let scoreAfter = scoreBefore - parseInt( segment.SegVal ) ;
+	let scoreAfter = scoreBefore - segment.SegVal ;
 	if( isBustScore( scoreAfter ) ){ return NDP_COLORS[3] ;}
 
 	let diff = getDartsNeeded( scoreBefore ) - getDartsNeeded( scoreAfter ) ;
-	return NDP_COLORS[ diff + 1 ] || NDP_COLORS[3] ;
+	return NDP_COLORS[diff + 1] || NDP_COLORS[3] ;
 }
 
 //==============================================================================
 function getScoringSegments(){
 	let retArr = [] ;
-	for( let segment of DFC_STATE.segments ){ if( parseInt( segment.SegMulti ) > 0 && parseInt( segment.SegVal ) > 0 ){ retArr.push( segment ) ;}}
+
+	for( let segment of DFC_STATE.segments ){
+		if( isSmallSegment( segment ) ){ continue ;}
+		if( segment.SegMulti > 0 && segment.SegVal > 0 ){ retArr.push( segment ) ;}
+	}
+
 	return retArr ;
 }
 
 //==============================================================================
 function getSetupSegments(){
 	let retArr = [] ;
+
 	for( let segment of DFC_STATE.segments ){
-		if( segment.SegId === "DBL" ){ continue ;}
-		if( parseInt( segment.SegMulti ) === 2 ){ continue ;}
-		if( parseInt( segment.SegMulti ) > 0 && parseInt( segment.SegVal ) > 0 ){ retArr.push( segment ) ;}
+		if( isSmallSegment( segment ) ){ continue ;}
+		if( segment.SegMulti === 2 && segment.SegId !== "DBL" ){ continue ;}
+		if( segment.SegMulti > 0 && segment.SegVal > 0 ){ retArr.push( segment ) ;}
 	}
+
 	return retArr ;
 }
 
 //==============================================================================
 function getFinishDoubleSegments(){
 	let retArr = [] ;
+
 	for( let segment of DFC_STATE.segments ){
 		if( segment.SegId === "DBL" ){ retArr.push( segment ) ; continue ;}
-		if( parseInt( segment.SegMulti ) === 2 && parseInt( segment.SegVal ) > 0 ){ retArr.push( segment ) ;}
+		if( segment.SegMulti === 2 && segment.SegVal > 0 ){ retArr.push( segment ) ;}
 	}
+
 	return retArr ;
 }
 
 //==============================================================================
 function getSegmentBaseDifficulty( segment ){
 	let segId = segment.SegId ;
-	let segMulti = parseInt( segment.SegMulti ) ;
+	let segMulti = segment.SegMulti ;
 
 	if( segId === "DBL" ){ return 20 ;}
 	if( segId === "SBL" ){ return 3.5 ;}
-	if( segMulti === 1 && segId.slice( 0, 1 ) === "S" ){ return 1.5 ;}
+	if( segMulti === 1 && segment.SegInRad === 2 ){ return 1.5 ;}
 	if( segMulti === 1 ){ return 1 ;}
 	if( segMulti === 2 ){ return 5.5 ;}
 	if( segMulti === 3 ){ return 9 ;}
@@ -104,8 +121,14 @@ function getSegmentBaseDifficulty( segment ){
 
 //==============================================================================
 function getSegmentFavWeight( segment ){
-	for( let favDbl of DFC_STATE.favDbls ){ if( favDbl.seg === segment.SegId ){ return favDbl.favWeight ;}}
-	for( let favTrp of DFC_STATE.favTrpls ){ if( favTrp.seg === segment.SegId ){ return favTrp.favWeight ;}}
+	for( let favDbl of DFC_STATE.favDbls ){
+		if( favDbl.seg === segment.SegId ){ return favDbl.favWeight ;}
+	}
+
+	for( let favTrp of DFC_STATE.favTrpls ){
+		if( favTrp.seg === segment.SegId ){ return favTrp.favWeight ;}
+	}
+
 	return 0 ;
 }
 
@@ -126,41 +149,100 @@ function getSegmentFavBonus( segment ){
 function getSegmentDifficulty( segment ){
 	let baseDF = getSegmentBaseDifficulty( segment ) ;
 	let favBonus = getSegmentFavBonus( segment ) ;
+
 	return baseDF * ( 1 - favBonus ) ;
 }
 
 //==============================================================================
 function getRouteDiff( segments ){
 	let diff = 1 ;
+
 	for( let segment of segments ){ diff = diff * getSegmentDifficulty( segment ) ;}
+
+	return diff ;
+}
+
+//==============================================================================
+function normalizeVisitProfile( profile ){
+	if( !profile ){ return "NO-PROFILE" ;}
+
+	let parts = profile.split( "-" ) ;
+	let retArr = [] ;
+
+	for( let part of parts ){
+		if( part === "SB" ){ retArr.push( "SBL" ) ;}
+		else if( part === "DB" ){ retArr.push( "DBL" ) ;}
+		else{ retArr.push( part ) ;}
+	}
+
+	return retArr.join( "-" ) ;
+}
+
+//==============================================================================
+function getProfileTokenDifficulty( token ){
+	if( token === "DNN" ){ return 0 ;}
+	if( token === "S" ){ return 1 ;}
+	if( token === "SBL" ){ return 3 ;}
+	if( token === "D" ){ return 5 ;}
+	if( token === "DBL" ){ return 9 ;}
+	if( token === "T" ){ return 12 ;}
+
+	return 99 ;
+}
+
+//==============================================================================
+function getProfileDifficulty( profile ){
+	let diff = 0 ;
+	let parts = normalizeVisitProfile( profile ).split( "-" ) ;
+
+	for( let part of parts ){ diff = diff + getProfileTokenDifficulty( part ) ;}
+
 	return diff ;
 }
 
 //==============================================================================
 function getLeaveDifficulty( score ){
-	let finishDoubles = getFinishDoubleSegments() ;
-	let bestDF = 999 ;
+	let scoreInfo = DFC_STATE.scores[score] ;
+	if( !scoreInfo || isBustScore( score ) ){ return [ 99, "BUST" ] ;}
 
-	for( let dbl of finishDoubles ){
-		if( parseInt( dbl.SegVal ) === score && getSegmentDifficulty( dbl ) < bestDF ){ bestDF = getSegmentDifficulty( dbl ) ;}
-	}
+	return [
+		scoreInfo.DARTSNEEDED,
+		normalizeVisitProfile( scoreInfo.EZVISITPROFILE || scoreInfo.VISITPROFILE )
+	] ;
+}
+//==============================================================================
+function compareLeaveDifficulty( a, b ){
+	if( a[0] !== b[0] ){ return a[0] - b[0] ;}
 
-	if( bestDF < 999 ){ return bestDF ;}
-	return 999 ;
+	let profileDiffA = getProfileDifficulty( a[1] ) ;
+	let profileDiffB = getProfileDifficulty( b[1] ) ;
+
+	if( profileDiffA !== profileDiffB ){ return profileDiffA - profileDiffB ;}
+
+	return a[1].localeCompare( b[1] ) ;
+}
+
+//==============================================================================
+function setupRouteImprovesScore( scoreAfter, scoreBefore ){
+	let leaveBefore = getLeaveDifficulty( scoreBefore ) ;
+	let leaveAfter = getLeaveDifficulty( scoreAfter ) ;
+
+	return compareLeaveDifficulty( leaveAfter, leaveBefore ) < 0 ;
 }
 
 //==============================================================================
 function compareSetupSegments( a, b ){
 	let favA = getSegmentFavWeight( a ) ;
 	let favB = getSegmentFavWeight( b ) ;
-	let valA = parseInt( a.SegVal ) ;
-	let valB = parseInt( b.SegVal ) ;
+	let valA = a.SegVal ;
+	let valB = b.SegVal ;
 	let dfA = getSegmentDifficulty( a ) ;
 	let dfB = getSegmentDifficulty( b ) ;
 
 	if( favA !== favB ){ return favB - favA ;}
 	if( valA !== valB ){ return valB - valA ;}
 	if( dfA !== dfB ){ return dfA - dfB ;}
+
 	return a.SegId.localeCompare( b.SegId ) ;
 }
 
@@ -168,6 +250,7 @@ function compareSetupSegments( a, b ){
 function getCanonicalSetupSegments( segments ){
 	let retArr = segments.slice() ;
 	retArr.sort( compareSetupSegments ) ;
+
 	return retArr ;
 }
 
@@ -175,8 +258,8 @@ function getCanonicalSetupSegments( segments ){
 function makeRouteDart( segment ){
 	return {
 		seg: segment.SegId,
-		val: parseInt( segment.SegVal ),
-		multi: parseInt( segment.SegMulti ),
+		val: segment.SegVal,
+		multi: segment.SegMulti,
 		df: getSegmentDifficulty( segment )
 	} ;
 }
@@ -184,12 +267,13 @@ function makeRouteDart( segment ){
 //==============================================================================
 function makeFinishRoute( segments ){
 	let darts = [] ;
+
 	for( let segment of segments ){ darts.push( makeRouteDart( segment ) ) ;}
 
 	return {
 		diff: getRouteDiff( segments ),
 		darts: darts,
-		leaveDF: 0,
+		leaveDF: [ 0, "FINISH" ],
 		scoreAfter: 0,
 		text: routeTextFromSegments( segments ),
 		type: "finish"
@@ -203,7 +287,7 @@ function makeSetupRoute( segments, scoreBefore ){
 
 	for( let segment of segments ){
 		darts.push( makeRouteDart( segment ) ) ;
-		scoreAfter = scoreAfter - parseInt( segment.SegVal ) ;
+		scoreAfter = scoreAfter - segment.SegVal ;
 	}
 
 	return {
@@ -235,9 +319,13 @@ function sortSetupRoutes( routes ){
 		(a, b)=>{
 			if( a.dnAfter !== b.dnAfter ){ return a.dnAfter - b.dnAfter ;}
 			if( a.dnDiff !== b.dnDiff ){ return b.dnDiff - a.dnDiff ;}
-			if( a.leaveDF !== b.leaveDF ){ return a.leaveDF - b.leaveDF ;}
+
+			let leaveCmp = compareLeaveDifficulty( a.leaveDF, b.leaveDF ) ;
+			if( leaveCmp !== 0 ){ return leaveCmp ;}
+
 			if( a.diff !== b.diff ){ return a.diff - b.diff ;}
 			if( a.scoreAfter !== b.scoreAfter ){ return a.scoreAfter - b.scoreAfter ;}
+
 			return a.text.localeCompare( b.text ) ;
 		}
 	) ;
@@ -246,21 +334,27 @@ function sortSetupRoutes( routes ){
 //==============================================================================
 function routeText( route ){
 	let parts = [] ;
+
 	for( let dart of route.darts ){ parts.push( dart.seg ) ;}
+
 	return parts.join( "-" ) ;
 }
 
 //==============================================================================
 function routeTextFromSegments( segments ){
 	let parts = [] ;
+
 	for( let segment of segments ){ parts.push( segment.SegId ) ;}
+
 	return parts.join( "-" ) ;
 }
 
 //==============================================================================
 function routeKeyFromSegments( segments ){
 	let parts = [] ;
+
 	for( let segment of segments ){ parts.push( segment.SegId ) ;}
+
 	return parts.join( "-" ) ;
 }
 
@@ -271,6 +365,7 @@ function canContinueAfterScore( score ){ return score > 1 ; }
 function getFinishRoutes( scoreBefore, dartsInHand, boardIndex ){
 	if( isBustScore( scoreBefore ) ){ return [] ;}
 	if( isFinishLive( scoreBefore, dartsInHand ) ){ return getLiveFinishRoutes( scoreBefore, dartsInHand ) ;}
+
 	return getSetupRoutes( scoreBefore, dartsInHand ) ;
 }
 
@@ -283,6 +378,7 @@ function getLiveFinishRoutes( scoreBefore, dartsInHand ){
 	if( dartsInHand >= 3 ){ routes = routes.concat( getThreeDartFinishRoutes( scoreBefore ) ) ;}
 
 	sortFinishRoutes( routes ) ;
+
 	return routes.slice( 0, MAX_FINISH_ROUTES ) ;
 }
 
@@ -296,6 +392,7 @@ function getSetupRoutes( scoreBefore, dartsInHand ){
 	if( dartsInHand >= 3 ){ addThreeDartSetupRoutes( routes, routeKeys, scoreBefore ) ;}
 
 	sortSetupRoutes( routes ) ;
+
 	return routes.slice( 0, MAX_FINISH_ROUTES ) ;
 }
 
@@ -304,9 +401,10 @@ function addOneDartSetupRoutes( routes, routeKeys, score ){
 	let setupSegments = getSetupSegments() ;
 
 	for( let dart1 of setupSegments ){
-		let scoreAfterDart1 = score - parseInt( dart1.SegVal ) ;
+		let scoreAfterDart1 = score - dart1.SegVal ;
 		if( !canContinueAfterScore( scoreAfterDart1 ) ){ continue ;}
-		if( getDartsNeeded( scoreAfterDart1 ) >= getDartsNeeded( score ) ){ continue ;}
+		if( !setupRouteImprovesScore( scoreAfterDart1, score ) ){ continue ;}
+
 		addSetupRouteIfNew( routes, routeKeys, [ dart1 ], score ) ;
 	}
 }
@@ -316,13 +414,14 @@ function addTwoDartSetupRoutes( routes, routeKeys, score ){
 	let setupSegments = getSetupSegments() ;
 
 	for( let dart1 of setupSegments ){
-		let scoreAfterDart1 = score - parseInt( dart1.SegVal ) ;
+		let scoreAfterDart1 = score - dart1.SegVal ;
 		if( !canContinueAfterScore( scoreAfterDart1 ) ){ continue ;}
 
 		for( let dart2 of setupSegments ){
-			let scoreAfterDart2 = scoreAfterDart1 - parseInt( dart2.SegVal ) ;
+			let scoreAfterDart2 = scoreAfterDart1 - dart2.SegVal ;
 			if( !canContinueAfterScore( scoreAfterDart2 ) ){ continue ;}
-			if( getDartsNeeded( scoreAfterDart2 ) >= getDartsNeeded( score ) ){ continue ;}
+			if( !setupRouteImprovesScore( scoreAfterDart2, score ) ){ continue ;}
+
 			addSetupRouteIfNew( routes, routeKeys, [ dart1, dart2 ], score ) ;
 		}
 	}
@@ -333,17 +432,18 @@ function addThreeDartSetupRoutes( routes, routeKeys, score ){
 	let setupSegments = getSetupSegments() ;
 
 	for( let dart1 of setupSegments ){
-		let scoreAfterDart1 = score - parseInt( dart1.SegVal ) ;
+		let scoreAfterDart1 = score - dart1.SegVal ;
 		if( !canContinueAfterScore( scoreAfterDart1 ) ){ continue ;}
 
 		for( let dart2 of setupSegments ){
-			let scoreAfterDart2 = scoreAfterDart1 - parseInt( dart2.SegVal ) ;
+			let scoreAfterDart2 = scoreAfterDart1 - dart2.SegVal ;
 			if( !canContinueAfterScore( scoreAfterDart2 ) ){ continue ;}
 
 			for( let dart3 of setupSegments ){
-				let scoreAfterDart3 = scoreAfterDart2 - parseInt( dart3.SegVal ) ;
+				let scoreAfterDart3 = scoreAfterDart2 - dart3.SegVal ;
 				if( !canContinueAfterScore( scoreAfterDart3 ) ){ continue ;}
-				if( getDartsNeeded( scoreAfterDart3 ) >= getDartsNeeded( score ) ){ continue ;}
+				if( !setupRouteImprovesScore( scoreAfterDart3, score ) ){ continue ;}
+
 				addSetupRouteIfNew( routes, routeKeys, [ dart1, dart2, dart3 ], score ) ;
 			}
 		}
@@ -356,9 +456,12 @@ function getOneDartFinishRoutes( score ){
 	let routeKeys = {} ;
 	let finishDoubles = getFinishDoubleSegments() ;
 
-	for( let dbl of finishDoubles ){ if( parseInt( dbl.SegVal ) === score ){ addRouteIfNew( routes, routeKeys, [ dbl ] ) ;}}
+	for( let dbl of finishDoubles ){
+		if( dbl.SegVal === score ){ addRouteIfNew( routes, routeKeys, [ dbl ] ) ;}
+	}
 
 	sortFinishRoutes( routes ) ;
+
 	return routes.slice( 0, MAX_FINISH_ROUTES ) ;
 }
 
@@ -370,16 +473,17 @@ function getTwoDartFinishRoutes( score ){
 	let finishDoubles = getFinishDoubleSegments() ;
 
 	for( let dart1 of scoringSegments ){
-		let scoreAfterDart1 = score - parseInt( dart1.SegVal ) ;
+		let scoreAfterDart1 = score - dart1.SegVal ;
 		if( !canContinueAfterScore( scoreAfterDart1 ) ){ continue ;}
 
 		for( let dart2 of finishDoubles ){
-			if( parseInt( dart1.SegVal ) + parseInt( dart2.SegVal ) !== score ){ continue ;}
+			if( dart1.SegVal + dart2.SegVal !== score ){ continue ;}
 			addRouteIfNew( routes, routeKeys, [ dart1, dart2 ] ) ;
 		}
 	}
 
 	sortFinishRoutes( routes ) ;
+
 	return routes.slice( 0, MAX_FINISH_ROUTES ) ;
 }
 
@@ -391,29 +495,31 @@ function getThreeDartFinishRoutes( score ){
 	let finishDoubles = getFinishDoubleSegments() ;
 
 	for( let dart1 of scoringSegments ){
-		let scoreAfterDart1 = score - parseInt( dart1.SegVal ) ;
+		let scoreAfterDart1 = score - dart1.SegVal ;
 		if( getDartsNeeded( scoreAfterDart1 ) > 2 ){ continue ;}
 
 		for( let dart2 of scoringSegments ){
-			let scoreAfterDart2 = scoreAfterDart1 - parseInt( dart2.SegVal ) ;
+			let scoreAfterDart2 = scoreAfterDart1 - dart2.SegVal ;
 			if( !canContinueAfterScore( scoreAfterDart2 ) ){ continue ;}
 
 			for( let dart3 of finishDoubles ){
-				if( parseInt( dart1.SegVal ) + parseInt( dart2.SegVal ) + parseInt( dart3.SegVal ) !== score ){ continue ;}
+				if( dart1.SegVal + dart2.SegVal + dart3.SegVal !== score ){ continue ;}
 				addRouteIfNew( routes, routeKeys, [ dart1, dart2, dart3 ] ) ;
 			}
 		}
 	}
 
 	sortFinishRoutes( routes ) ;
+
 	return routes.slice( 0, MAX_FINISH_ROUTES ) ;
 }
 
 //==============================================================================
 function addRouteIfNew( routes, routeKeys, segments ){
 	let routeKey = routeKeyFromSegments( segments ) ;
-	if( routeKeys[ routeKey ] ){ return ;}
-	routeKeys[ routeKey ] = true ;
+	if( routeKeys[routeKey] ){ return ;}
+
+	routeKeys[routeKey] = true ;
 	routes.push( makeFinishRoute( segments ) ) ;
 }
 
@@ -421,8 +527,9 @@ function addRouteIfNew( routes, routeKeys, segments ){
 function addSetupRouteIfNew( routes, routeKeys, segments, scoreBefore ){
 	let sortedSegments = getCanonicalSetupSegments( segments ) ;
 	let routeKey = routeKeyFromSegments( sortedSegments ) ;
-	if( routeKeys[ routeKey ] ){ return ;}
-	routeKeys[ routeKey ] = true ;
+	if( routeKeys[routeKey] ){ return ;}
+
+	routeKeys[routeKey] = true ;
 	routes.push( makeSetupRoute( sortedSegments, scoreBefore ) ) ;
 }
 

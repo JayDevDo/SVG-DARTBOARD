@@ -1,7 +1,7 @@
 /*=============================================================================
 	ui.js
-	Version 1.0.1
-	2026-06-02 19h00
+	Version 1.0.2
+	2026-06-04
 ============================================================================= */
 
 const DFC_UI = {
@@ -48,8 +48,13 @@ function cacheUiElements(){
 
 //==============================================================================
 function bindUiEvents(){
-	for( let button of DFC_UI.numPadButtons ){ button.addEventListener( "click", ()=>{ handleNumPadInput( button.dataset.numpadValue ) ;}) ;}
-	for( let button of DFC_UI.dihButtons ){ button.addEventListener( "click", ()=>{ handleDihButtonClick( button ) ;}) ;}
+	for( let button of DFC_UI.numPadButtons ){
+		button.addEventListener( "click", ()=>{ handleNumPadInput( button.dataset.numpadValue ) ;}) ;
+	}
+
+	for( let button of DFC_UI.dihButtons ){
+		button.addEventListener( "click", ()=>{ handleDihButtonClick( button ) ;}) ;
+	}
 
 	DFC_UI.btnScoreOk.addEventListener( "click", handleScoreOkClick ) ;
 	DFC_UI.btnResetBoards.addEventListener( "click", handleResetBoardsClick ) ;
@@ -78,6 +83,7 @@ async function initDFC(){
 function handleNumPadInput( value ){
 	if( value === "delete" ){ deleteScoreInputDigit() ;}
 	else{ addScoreInputDigit( value ) ;}
+
 	renderScoreInput() ;
 }
 
@@ -86,7 +92,7 @@ function handleScoreOkClick(){
 	if( !hasDFCData() ){ addMessage( "Data is not loaded yet." ) ; renderMessages() ; return ;}
 
 	clearMessages() ;
-	useScoreInputAsStartScore() ;
+	setStartScore( getParsedScoreInput() ) ;
 	DFC_UI.boardsBuilt = true ;
 
 	addMessage( "Score set to " + DFC_STATE.startScore + "." ) ;
@@ -134,7 +140,7 @@ function renderFullUi(){
 
 	if( DFC_UI.boardsBuilt ){
 		renderAllDartBoards() ;
-		renderAllFinishTables() ;
+		renderFinishTablesFrom( 0 ) ;
 	}
 
 	renderMessages() ;
@@ -176,15 +182,14 @@ function renderScorePanels(){
 //==============================================================================
 function getDisplayFinalScore(){
 	let finalScore = DFC_STATE.startScore ;
+
 	for( let dartIndex = 0 ; dartIndex < 3 ; dartIndex++ ){ finalScore = finalScore - getDartValue( dartIndex ) ;}
+
 	return finalScore ;
 }
 
 //==============================================================================
-function renderAllFinishTables(){ renderFinishTablesFrom( 0 ) ; }
-
-//==============================================================================
-function renderFinishTablesFrom( startBoardIndex ){
+function renderFinishTablesFrom( startBoardIndex = 0 ){
 	for( let boardIndex = startBoardIndex ; boardIndex < 3 ; boardIndex++ ){ renderFinishTable( boardIndex ) ;}
 }
 
@@ -215,11 +220,11 @@ function renderFinishTable( boardIndex ){
 function renderFinishTableHeader( thead, boardIndex ){
 	let row = document.createElement( "tr" ) ;
 
-	appendTableCell( row, "th", "DF" ) ;
-
 	for( let dartIndex = boardIndex ; dartIndex < 3 ; dartIndex++ ){
 		appendTableCell( row, "th", "D" + ( dartIndex + 1 ) ) ;
 	}
+
+	appendTableCell( row, "th", "DF" ) ;
 
 	thead.appendChild( row ) ;
 }
@@ -229,11 +234,11 @@ function renderFinishTableBody( tbody, routes, boardIndex ){
 	for( let route of routes ){
 		let row = document.createElement( "tr" ) ;
 
-		appendTableCell( row, "td", route.diff ) ;
-
 		for( let dartIndex = boardIndex ; dartIndex < 3 ; dartIndex++ ){
-			appendTableCell( row, "td", getRouteDartText( route, dartIndex - boardIndex ) ) ;
+			appendTableCell( row, "td", getRouteDartText( route, dartIndex - boardIndex, boardIndex ) ) ;
 		}
+
+		appendTableCell( row, "td", route.diff ) ;
 
 		tbody.appendChild( row ) ;
 	}
@@ -242,22 +247,43 @@ function renderFinishTableBody( tbody, routes, boardIndex ){
 //==============================================================================
 function appendTableCell( row, tagName, text ){
 	let cell = document.createElement( tagName ) ;
+
 	if( typeof text === "number" ){ text = ( Math.round( text * 100 ) / 100 ).toString() ;}
+
 	cell.textContent = text ;
 	row.appendChild( cell ) ;
 }
 
 //==============================================================================
-function getRouteDartText( route, routeDartIndex ){
+function getRouteDartText( route, routeDartIndex, boardIndex ){
 	if( !route.darts[routeDartIndex] ){ return "DNN" ;}
-	return route.darts[routeDartIndex].seg ;
+
+	let dartText = route.darts[routeDartIndex].seg ;
+
+	if( boardIndex === 2 && route.type === "setup" ){
+		return dartText + " (" + getScoreAfterSegmentDisplay( route.scoreAfter ) + ")" ;
+	}
+
+	return dartText ;
+}
+
+//==============================================================================
+function getScoreAfterSegmentDisplay( scoreAfter ){
+	for( let segment of DFC_STATE.segments ){
+		if( segment.SegMulti !== 2 ){ continue ;}
+		if( segment.SegVal === scoreAfter ){ return segment.SegId ;}
+	}
+
+	return scoreAfter ;
 }
 
 //==============================================================================
 function renderNoFinishRoute( targetElement ){
 	let div = document.createElement( "div" ) ;
+
 	div.className = "noFinishRoute" ;
 	div.textContent = "No route" ;
+
 	targetElement.appendChild( div ) ;
 }
 
@@ -267,13 +293,13 @@ function renderMessages(){
 
 	for( let message of getMessages() ){
 		let div = document.createElement( "div" ) ;
+
 		div.className = "messageLine" ;
 		div.textContent = message ;
+
 		DFC_UI.messagePanel.appendChild( div ) ;
 	}
 }
-
 //==============================================================================
 initDFC() ;
-
 //==============================================================================
