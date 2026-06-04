@@ -1,100 +1,242 @@
 /*=============================================================================
 	appState.js
-	Version 1.0.2	2026-06-04
+	Version 1.0.3	2026-06-04
 ============================================================================= */
-const SCORES_JSON_PATH = "scores.json" ;
-const SEGMENTS_JSON_PATH = "jsonDartBoard102.json" ;
-const DFC_DEFAULT_SCORE = 121 ;
+const SCORES_JSON_PATH = "scores.json";
+const SEGMENTS_JSON_PATH = "jsonDartBoard102.json";
+const DFC_DEFAULT_SCORE = 121;
+const DFC_SCORE_PLACEHOLDER = "___";
 const DFC_STATE = {
 	startScore: DFC_DEFAULT_SCORE,
-	scoreInput: "000",
+	scoreInput: DFC_DEFAULT_SCORE.toString(),
 	dartsInHand: 3,
 	darts: [ null, null, null ],
 	scores: [],
 	segments: [],
 	dataLoaded: false,
 	favDbls: [
+		{ seg: "D16", val: 32, favWeight: 40 },
 		{ seg: "D20", val: 40, favWeight: 40 },
-		{ seg: "D16", val: 32, favWeight: 35 },
-		{ seg: "D18", val: 36, favWeight: 25 }
+		{ seg: "D18", val: 36, favWeight: 20 }
 	],
 	favTrpls: [
-		{ seg: "T20", val: 60, favWeight: 40 },
-		{ seg: "T19", val: 57, favWeight: 50 },
-		{ seg: "T18", val: 54, favWeight: 10 }
+		{ seg: "T18", val: 54, favWeight: 40 },
+		{ seg: "T19", val: 57, favWeight: 30 },
+		{ seg: "T20", val: 60, favWeight: 30 }
 	],
 	messages: []
-} ;
+};
 //==============================================================================
 async function loadJsonFile( path ){
-	let response = await fetch( path ) ;
-	if( !response.ok ){ throw new Error( "Could not load " + path + " status " + response.status ) ;}
-	return await response.json() ;
+	let response = await fetch( path );
+	if( !response.ok ){throw new Error( "Could not load " + path + " status " + response.status );}
+	return await response.json();
 }
 //==============================================================================
-function keyJsonArray( jsonArray, keyName ){ for( let item of jsonArray ){ jsonArray[item[keyName]] = item ;} return jsonArray ; }
+function keyJsonArray(jsonArray,keyName){for(let item of jsonArray){jsonArray[item[keyName]] = item;} return jsonArray;}
 //==============================================================================
 async function loadDFCData(){
-	let data = await Promise.all([ loadJsonFile( SCORES_JSON_PATH ), loadJsonFile( SEGMENTS_JSON_PATH ) ]) ;
-	DFC_STATE.scores = data[0] ;
-	DFC_STATE.segments = keyJsonArray( data[1], "SegId" ) ;
-	DFC_STATE.dataLoaded = true ;
-	return DFC_STATE ;
+	let data = await Promise.all([ loadJsonFile( SCORES_JSON_PATH ), loadJsonFile( SEGMENTS_JSON_PATH ) ]);
+	DFC_STATE.scores = data[0];
+	DFC_STATE.segments = keyJsonArray( data[1], "SegId" );
+	DFC_STATE.dataLoaded = true;
+	return DFC_STATE;
 }
 //==============================================================================
-function setScoreInput( value ){ DFC_STATE.scoreInput = value.toString() ; }
+function setScoreInput( value ){DFC_STATE.scoreInput = value.toString();}
 //==============================================================================
-function getScoreInput(){ return DFC_STATE.scoreInput ; }
+function getScoreInput(){return DFC_STATE.scoreInput;}
 //==============================================================================
-function resetScoreInput(){ DFC_STATE.scoreInput = "000" ; }
+function resetScoreInput(){DFC_STATE.scoreInput = DFC_DEFAULT_SCORE.toString();}
 //==============================================================================
 function addScoreInputDigit( digit ){
-	let curScore = DFC_STATE.scoreInput.toString() ;
-	if( curScore.length >= 3 ){ DFC_STATE.scoreInput = digit.toString() ; return ;}
-	DFC_STATE.scoreInput = curScore + digit.toString() ;
+	let curScore = DFC_STATE.scoreInput.toString();
+	if( curScore === DFC_SCORE_PLACEHOLDER || curScore.length >= 3 ){DFC_STATE.scoreInput = digit.toString(); return;}
+	DFC_STATE.scoreInput = curScore + digit.toString();
 }
 //==============================================================================
 function deleteScoreInputDigit(){
-	let curScore = DFC_STATE.scoreInput.toString() ;
-	if( curScore.length <= 1 ){ DFC_STATE.scoreInput = "000" ; return ;}
-	DFC_STATE.scoreInput = curScore.slice( 0, -1 ) ;
+	let curScore = DFC_STATE.scoreInput.toString();
+	if( curScore === DFC_SCORE_PLACEHOLDER ){return;}
+	if( curScore.length <= 1 ){DFC_STATE.scoreInput = DFC_SCORE_PLACEHOLDER; return;}
+	DFC_STATE.scoreInput = curScore.slice( 0, -1 );
 }
 //==============================================================================
 function getParsedScoreInput(){
-	let parsedScore = parseInt( DFC_STATE.scoreInput ) ;
-	if( isNaN( parsedScore ) ){ return 0 ;}
-	return parsedScore ;
+	if( DFC_STATE.scoreInput === DFC_SCORE_PLACEHOLDER ){return DFC_DEFAULT_SCORE;}
+
+	let parsedScore = parseInt( DFC_STATE.scoreInput );
+	if( isNaN( parsedScore ) ){return DFC_DEFAULT_SCORE;}
+	return parsedScore;
 }
 //==============================================================================
-function setStartScore( score ){ DFC_STATE.startScore = parseInt( score ) ; resetDarts() ; }
+function setStartScore( score ){DFC_STATE.startScore = parseInt( score ); resetDarts();}
 //==============================================================================
-function setDartsInHand( dartsInHand ){ DFC_STATE.dartsInHand = parseInt( dartsInHand ) ; resetDartsFrom( DFC_STATE.dartsInHand ) ; }
+function setDartsInHand( dartsInHand ){DFC_STATE.dartsInHand = parseInt(dartsInHand); resetDartsFrom( DFC_STATE.dartsInHand );}
 //==============================================================================
-function resetDarts(){ DFC_STATE.darts = [ null, null, null ] ; }
+function resetDarts(){DFC_STATE.darts = [ null, null, null ];}
 //==============================================================================
-function resetDartsFrom( dartIndex ){ for( let i = dartIndex ; i < 3 ; i++ ){ DFC_STATE.darts[i] = null ;} }
+function resetDartsFrom( dartIndex ){for( let i = dartIndex; i < 3; i++ ){DFC_STATE.darts[i] = null;}}
 //==============================================================================
-function setDartSegment( dartIndex, segment ){ DFC_STATE.darts[dartIndex] = segment ; resetDartsFrom( dartIndex + 1 ) ; }
+function setDartSegment( dartIndex, segment ){DFC_STATE.darts[dartIndex] = segment; resetDartsFrom( dartIndex + 1 );}
 //==============================================================================
-function getDartSegment( dartIndex ){ return DFC_STATE.darts[dartIndex] ; }
+function getDartSegment( dartIndex ){return DFC_STATE.darts[dartIndex];}
 //==============================================================================
 function getDartSegmentName( dartIndex ){
-	let segment = getDartSegment( dartIndex ) ;
-	if( !segment ){ return "DNN" ;}
-	return segment.SegId ;
+	let segment = getDartSegment( dartIndex );
+	if( !segment ){return "DNN";}
+	return segment.SegId;
 }
 //==============================================================================
 function getDartValue( dartIndex ){
-	let segment = getDartSegment( dartIndex ) ;
-	if( !segment ){ return 0 ;}
-	return segment.SegVal ;
+	let segment = getDartSegment( dartIndex );
+	if( !segment ){return 0;}
+	return segment.SegVal;
 }
 //==============================================================================
-function hasDFCData(){ return DFC_STATE.dataLoaded ; }
+function hasDFCData(){return DFC_STATE.dataLoaded;}
 //==============================================================================
-function addMessage( message ){ DFC_STATE.messages.push( message ) ; }
+function addMessage( message ){DFC_STATE.messages.push( message );}
 //==============================================================================
-function clearMessages(){ DFC_STATE.messages = [] ; }
+function clearMessages(){DFC_STATE.messages = [];}
 //==============================================================================
-function getMessages(){ return DFC_STATE.messages ; }
+function getMessages(){return DFC_STATE.messages;}
+//==============================================================================
+function getFavList( favType ){return favType === "DBL" ? DFC_STATE.favDbls : DFC_STATE.favTrpls;}
+//==============================================================================
+function clampFavWeight( favWeight ){
+	if( favWeight < 0 ){return 0;}
+	if( favWeight > 100 ){return 100;}
+	return favWeight;
+}
+//==============================================================================
+function formatFavWeight( favWeight ){return Math.round( favWeight ).toString();}
+//==============================================================================
+function getFavOtherIndexes( favIndex ){
+	let retArr = [];
+	for( let i = 0; i < 3; i++ ){if( i !== parseInt( favIndex ) ){retArr.push( i );}}
+	return retArr;
+}
+//==============================================================================
+function roundFavZeroPair( favList ){
+	let zeroIndexes = [];
+	let activeIndexes = [];
+
+	for( let i = 0; i < favList.length; i++ ){
+		if( favList[i].favWeight === 0 ){zeroIndexes.push( i );}
+		else{activeIndexes.push( i );}
+	}
+
+	if( zeroIndexes.length !== 1 ){return;}
+
+	let total = favList[activeIndexes[0]].favWeight + favList[activeIndexes[1]].favWeight;
+	let diff = 100 - total;
+
+	while( diff > 0 ){
+		let addIndex = favList[activeIndexes[0]].favWeight <= favList[activeIndexes[1]].favWeight ? activeIndexes[0] : activeIndexes[1];
+		favList[addIndex].favWeight++;
+		diff--;
+	}
+
+	while( diff < 0 ){
+		let subIndex = favList[activeIndexes[0]].favWeight >= favList[activeIndexes[1]].favWeight ? activeIndexes[0] : activeIndexes[1];
+		favList[subIndex].favWeight--;
+		diff++;
+	}
+}
+//==============================================================================
+function stepBalancedFavWeight( favList, favIndex, stepDelta ){
+	let targetIndex = parseInt( favIndex );
+	let otherIndexes = getFavOtherIndexes( targetIndex );
+	let target = favList[targetIndex];
+	let otherA = favList[otherIndexes[0]];
+	let otherB = favList[otherIndexes[1]];
+
+	if( stepDelta > 0 ){
+		if( otherA.favWeight > 0 && otherB.favWeight > 0 ){
+			target.favWeight = clampFavWeight( target.favWeight + 2 );
+			otherA.favWeight--;
+			otherB.favWeight--;
+		}else if( otherA.favWeight > 1 ){
+			target.favWeight = clampFavWeight( target.favWeight + 2 );
+			otherA.favWeight = otherA.favWeight - 2;
+		}else if( otherB.favWeight > 1 ){
+			target.favWeight = clampFavWeight( target.favWeight + 2 );
+			otherB.favWeight = otherB.favWeight - 2;
+		}
+	}else{
+		if( target.favWeight === 0 ){return;}
+
+		if( target.favWeight === 1 ){
+			target.favWeight = 0;
+			roundFavZeroPair( favList );
+			return;
+		}
+
+		target.favWeight = target.favWeight - 2;
+		otherA.favWeight++;
+		otherB.favWeight++;
+	}
+
+	roundFavZeroPair( favList );
+}
+//==============================================================================
+function setBalancedFavWeight( favType, favIndex, newWeight ){
+	let favList = getFavList( favType );
+	let targetIndex = parseInt( favIndex );
+	let targetWeight = clampFavWeight( parseInt( newWeight ) );
+	let guard = 0;
+
+	while( favList[targetIndex].favWeight !== targetWeight && guard < 60 ){
+		if( targetWeight > favList[targetIndex].favWeight ){stepBalancedFavWeight( favList, targetIndex, 2 );}
+		else{stepBalancedFavWeight( favList, targetIndex, -2 );}
+		guard++;
+	}
+}
+//==============================================================================
+function adjustBalancedFavWeight( favType, favIndex, weightDelta ){
+	let favList = getFavList( favType );
+	setBalancedFavWeight( favType, favIndex, favList[parseInt( favIndex )].favWeight + parseInt( weightDelta ) );
+}
+//==============================================================================
+function rebalanceFavWeightsAfterExactSet( favList, targetIndex ){
+	let otherIndexes = getFavOtherIndexes( targetIndex );
+	let total = 0;
+
+	for( let fav of favList ){total = total + fav.favWeight;}
+
+	let diff = 100 - total;
+
+	while( diff > 0 ){
+		let addIndex = favList[otherIndexes[0]].favWeight <= favList[otherIndexes[1]].favWeight ? otherIndexes[0] : otherIndexes[1];
+		favList[addIndex].favWeight++;
+		diff--;
+	}
+
+	while( diff < 0 ){
+		let subIndex = favList[otherIndexes[0]].favWeight >= favList[otherIndexes[1]].favWeight ? otherIndexes[0] : otherIndexes[1];
+		if( favList[subIndex].favWeight === 0 ){return;}
+		favList[subIndex].favWeight--;
+		diff++;
+	}
+
+	roundFavZeroPair( favList );
+}
+//==============================================================================
+function setFavWeightExact( favType, favIndex, newWeight ){
+	let parsedWeight = parseInt( newWeight );
+	if( isNaN( parsedWeight ) ){return;}
+
+	let favList = getFavList( favType );
+	let targetIndex = parseInt( favIndex );
+
+	favList[targetIndex].favWeight = clampFavWeight( parsedWeight );
+	rebalanceFavWeightsAfterExactSet( favList, targetIndex );
+}
+//==============================================================================
+function getFavWeightTotal( favType ){
+	let total = 0;
+	for( let fav of getFavList( favType ) ){total = total + fav.favWeight;}
+	return total;
+}
 //==============================================================================

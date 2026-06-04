@@ -1,7 +1,7 @@
 /* =============================================================================
 	DFC.css
-	Version 1.0.1
-	2026-06-02 19h00
+	Version 1.0.3
+	2026-06-04
 ============================================================================= */
 
 :root{
@@ -91,12 +91,12 @@ td{
 ============================================================================= */
 
 .controlPanel{
-	flex: 0 0 180px;
+	flex: 0 0 200px;
 	background-color: var(--panel-bg);
 }
 
 .numPadTable{
-	width: 180px;
+	width: 200px;
 	table-layout: fixed;
 	z-index: 99;
 }
@@ -142,6 +142,40 @@ td{
 
 #scoreFinal{
 	min-width: 60px;
+}
+
+.favSliderLine{
+	display: grid;
+	grid-template-columns: 42px 24px 1fr 24px 34px;
+	align-items: center;
+	gap: 4px;
+	margin: 4px 0;
+}
+
+.favSliderLine input[type = "range"]{
+	width: 100%;
+	background: linear-gradient(
+		to right,
+		#006400 0%,
+		#006400 var(--fav-level),
+		#333333 var(--fav-level),
+		#333333 100%
+	);
+}
+
+.favStepButton{
+	width: 24px;
+	min-height: 22px;
+	padding: 0;
+	font-weight: bold;
+}
+
+.favWeightValue{
+	cursor: pointer;
+	padding: 2px;
+	border: 1px solid var(--line-soft);
+	background-color: var(--panel-bg-alt);
+	font-weight: bold;
 }
 
 /* =============================================================================
@@ -339,11 +373,11 @@ td{
 	}
 
 	.controlPanel{
-		flex: 0 0 180px;
+		flex: 0 0 200px;
 	}
 
 	.boardsPanel{
-		flex: 1 1 calc(100% - 200px);
+		flex: 1 1 calc(100% - 220px);
 	}
 
 	.messagePanel{
