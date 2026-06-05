@@ -1,8 +1,9 @@
-/*=============================================================================
-	svgDartBoard.js
-	Version 1.0.1
-	2026-06-02 19h00
-============================================================================= */
+/*
+=============================================================================
+svgDartBoard.js
+Version 1.0.3 2026-06-05 17h00
+============================================================================= 
+*/
 
 const SVG_NS = "http://www.w3.org/2000/svg" ;
 const BOARD_RADII = [0,0.0500,0.1200,0.4900,0.5900,0.8100,0.8900,0.8907,0.9999] ;
@@ -20,7 +21,6 @@ function polarToCartesian( cx, cy, radius, angleDeg ){
 //==============================================================================
 function annularSectorPath( cx, cy, innerRadius, outerRadius, startAngle, endAngle ){
 	let angleSize = Math.abs( endAngle - startAngle ) ;
-
 	if( angleSize >= 359.99 ){
 		if( innerRadius <= 0 ){
 			return [
@@ -81,7 +81,7 @@ function createBoardSegmentPath( segment, boardIndex, boardSize, scoreBefore, se
 	let outerRadius = boardRadius * BOARD_RADII[ segment.SegOutRad ] ;
 	let segmentColor = segment.SegColor ;
 
-	if( parseInt( segment.SegMulti ) > 0 ){ segmentColor = getSegmentAdviceColor( scoreBefore, segment ) ;}
+	if( parseInt( segment.SegMulti ) > 0 ){ segmentColor = getNxtDrtClr( scoreBefore, segment ) ;}
 
 	let path = createSvgElement( "path" ) ;
 
@@ -185,7 +185,7 @@ function renderAllDartBoards(){
 		renderDartBoard({
 			targetId: "dartBoard" + ( boardIndex + 1 ),
 			boardIndex: boardIndex,
-			scoreBefore: getScoreBeforeDart( boardIndex ),
+			scoreBefore: getSB_FromIdx( boardIndex ),
 			segments: DFC_STATE.segments,
 			selectedSegmentId: DFC_STATE.darts[ boardIndex ] ? DFC_STATE.darts[ boardIndex ].SegId : ""
 		}) ;
@@ -197,7 +197,7 @@ function renderDartBoardsFrom( startBoardIndex ){
 		renderDartBoard({
 			targetId: "dartBoard" + ( boardIndex + 1 ),
 			boardIndex: boardIndex,
-			scoreBefore: getScoreBeforeDart( boardIndex ),
+			scoreBefore: getSB_FromIdx( boardIndex ),
 			segments: DFC_STATE.segments,
 			selectedSegmentId: DFC_STATE.darts[ boardIndex ] ? DFC_STATE.darts[ boardIndex ].SegId : ""
 		}) ;

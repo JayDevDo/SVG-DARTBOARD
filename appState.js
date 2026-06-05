@@ -1,7 +1,9 @@
-/*=============================================================================
-	appState.js
-	Version 1.0.3	2026-06-04
-============================================================================= */
+/*
+=============================================================================
+appState.js
+Version 1.0.3 2026-06-05 17h00
+============================================================================= 
+*/
 const SCORES_JSON_PATH = "scores.json";
 const SEGMENTS_JSON_PATH = "jsonDartBoard102.json";
 const DFC_DEFAULT_SCORE = 121;
@@ -202,11 +204,8 @@ function adjustBalancedFavWeight( favType, favIndex, weightDelta ){
 function rebalanceFavWeightsAfterExactSet( favList, targetIndex ){
 	let otherIndexes = getFavOtherIndexes( targetIndex );
 	let total = 0;
-
 	for( let fav of favList ){total = total + fav.favWeight;}
-
 	let diff = 100 - total;
-
 	while( diff > 0 ){
 		let addIndex = favList[otherIndexes[0]].favWeight <= favList[otherIndexes[1]].favWeight ? otherIndexes[0] : otherIndexes[1];
 		favList[addIndex].favWeight++;
@@ -226,10 +225,8 @@ function rebalanceFavWeightsAfterExactSet( favList, targetIndex ){
 function setFavWeightExact( favType, favIndex, newWeight ){
 	let parsedWeight = parseInt( newWeight );
 	if( isNaN( parsedWeight ) ){return;}
-
 	let favList = getFavList( favType );
 	let targetIndex = parseInt( favIndex );
-
 	favList[targetIndex].favWeight = clampFavWeight( parsedWeight );
 	rebalanceFavWeightsAfterExactSet( favList, targetIndex );
 }
