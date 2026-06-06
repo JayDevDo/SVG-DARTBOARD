@@ -1,30 +1,42 @@
 /*
 =============================================================================
 checkoutEngine.js
-Version 1.0.3 2026-06-05 17h00
+Version 1.0.3 2026-06-06 17h30
 ============================================================================= 
 */
+
 const NDP_COLORS = [
 	"#FFAB00",	// diff = -1, worse
 	"#006400",	// diff = 0, same
 	"#00FF00",	// diff = 1, better
 	"#FF0000"	// bust / fallback
 ];
-const DFfromProfile = {
-	"BUST":99,
-	"D":6,
-	"DBL":15,
-	"DNN":0,
-	"S":1,
-	"SBL":3,
-	"T":9,
-	"OUT":0
-};
-
 const FAV_DBL_BONUS_MAX = 0.45;
 const FAV_TRP_BONUS_MAX = 0.25;
 const MAX_FINISH_ROUTES = 20;
 
+const DFfromProfile = {
+	"BUST":99,
+	"D":3,
+	"DBL":1,
+	"DNN":0,
+	"S":18,
+	"SBL":6,
+	"T":2,
+	"OUT":0
+};
+
+//==============================================================================
+function getSegDefaultDF( segment ){
+	let segId = segment.SegId;
+	if( segId === "DBL" || segId === "SBL" ){return DFfromProfile[segId];}
+	let segMulti = segment.SegMulti;
+	if( segMulti === 1 && segment.SegInRad === 2 ){return 12;}
+	if( segMulti === 1 ){return DFfromProfile["S"];}
+	if( segMulti === 2 ){return DFfromProfile["D"];}
+	if( segMulti === 3 ){return DFfromProfile["T"];}
+	return DFfromProfile["BUST"];
+}
 //==============================================================================
 function getDN( score ){let scoreInfo = DFC_STATE.scores[score]; if( !scoreInfo ){return 99;} return scoreInfo.DARTSNEEDED;}
 //==============================================================================
@@ -36,7 +48,7 @@ function isBustScore( score ){return score < 0 || score === 1;}
 //==============================================================================
 function getSB_FromIdx( dartIndex ){
 	let score = DFC_STATE.startScore;
-	for( let i = 0; i < dartIndex; i++ ){score = score - getDartValue( i ); }
+	for( let i = 0; i < dartIndex; i++ ){score = score - getDartValue( i );}
 	return score;
 }
 //==============================================================================
@@ -50,50 +62,38 @@ function getNxtDrtClr( scoreBefore, segment ){
 function getScoreSegs(){
 	// Only scoring segments. Excluding skinny singles ( SegInRad: 2 ) avoiding duplication and Outer Ring which has SegVal = 0.
 	let retArr = [];
-	for( let segment of DFC_STATE.segments ){ if( segment.SegInRad !== 2 && segment.SegVal > 0 ){retArr.push( segment );}}
+	for( let segment of DFC_STATE.segments ){if( segment.SegInRad !== 2 && segment.SegVal > 0 ){retArr.push( segment );}}
 	return retArr;
 }
 //==============================================================================
 function getDblSegs(){
 	// Legal checkout segments. Normal doubles plus DBL.
 	let retArr = [];
-	for( let segment of DFC_STATE.segments ){ if( segment.SegMulti === 2){ retArr.push(segment); }}
+	for( let segment of DFC_STATE.segments ){if( segment.SegMulti === 2 ){retArr.push( segment );}}
 	return retArr;
 }
 //==============================================================================
 function getWinningDbl( score ){
-	for( let segment of getDblSegs() ){ if( segment.SegVal === score ){return segment;} }
+	for( let segment of getDblSegs() ){if( segment.SegVal === score ){return segment;}}
 	return null;
 }
 //==============================================================================
-function getSegDefaultDF( segment ){
-	let segId = segment.SegId;
-	if( segId === "DBL" ){return 15; }
-	if( segId === "SBL" ){return 3; }
-	let segMulti = segment.SegMulti;
-	if( segMulti === 1 && segment.SegInRad === 2 ){ return 1.5; }
-	if( segMulti === 1 ){return 1; }
-	if( segMulti === 2 ){return 6; }
-	if( segMulti === 3 ){return 9; }
-	return 99;
-}
-//==============================================================================
 function getFavSegWght( segment ){
-	for( let favDbl of DFC_STATE.favDbls ){	if( favDbl.seg === segment.SegId ){return favDbl.favWeight;}}
+	for( let favDbl of DFC_STATE.favDbls ){if( favDbl.seg === segment.SegId ){return favDbl.favWeight;}}
 	for( let favTrp of DFC_STATE.favTrpls ){if( favTrp.seg === segment.SegId ){return favTrp.favWeight;}}
 	return 0;
 }
 //==============================================================================
 function getFavSegBns( segment ){
-	for(let favDbl of DFC_STATE.favDbls){if(favDbl.seg===segment.SegId){return favDbl.favWeight/100 * FAV_DBL_BONUS_MAX; }}
-	for(let favTrp of DFC_STATE.favTrpls){if(favTrp.seg===segment.SegId){return favTrp.favWeight/100 * FAV_TRP_BONUS_MAX;}}
+	for( let favDbl of DFC_STATE.favDbls ){if( favDbl.seg === segment.SegId ){return favDbl.favWeight / 100 * FAV_DBL_BONUS_MAX;}}
+	for( let favTrp of DFC_STATE.favTrpls ){if( favTrp.seg === segment.SegId ){return favTrp.favWeight / 100 * FAV_TRP_BONUS_MAX;}}
 	return 0;
 }
 //==============================================================================
 function getSegmentDifficulty( segment ){
 	let baseDF = getSegDefaultDF( segment );
 	let favBonus = getFavSegBns( segment );
-	return baseDF * ( 1 - favBonus );
+	return baseDF * ( 1 + favBonus );
 }
 //==============================================================================
 function getFinishRouteDiff( segments ){
@@ -122,14 +122,14 @@ function getProfileDF( profile ){
 function getLeaveDifficulty( score ){
 	let scoreInfo = DFC_STATE.scores[score];
 	if( !scoreInfo || isBustScore( score ) ){return [ 99, "BUST" ];}
-	return [scoreInfo.DARTSNEEDED,	scoreInfo.EZVISITPROFILE ];
+	return [ scoreInfo.DARTSNEEDED, scoreInfo.EZVISITPROFILE ];
 }
 //==============================================================================
 function compareLeaveDifficulty( a, b ){
 	if( a[0] !== b[0] ){return a[0] - b[0];}
 	let profileDiffA = getProfileDF( a[1] );
 	let profileDiffB = getProfileDF( b[1] );
-	if( profileDiffA !== profileDiffB ){return profileDiffA - profileDiffB;}
+	if( profileDiffA !== profileDiffB ){return profileDiffB - profileDiffA;}
 	return a[1].localeCompare( b[1] );
 }
 //==============================================================================
@@ -148,7 +148,7 @@ function compareSetupSegments( a, b ){
 	if( valA !== valB ){return valB - valA;}
 	let dfA = getSegmentDifficulty( a );
 	let dfB = getSegmentDifficulty( b );
-	if( dfA !== dfB ){return dfA - dfB;}
+	if( dfA !== dfB ){return dfB - dfA;}
 	return a.SegId.localeCompare( b.SegId );
 }
 //==============================================================================
@@ -161,7 +161,7 @@ function getCanonicalSetupSegments( segments ){
 function makeFinishRoute( segments ){
 	let darts = [];
 	for( let segment of segments ){
-		darts.push({seg:segment.SegId, val:segment.SegVal, multi:segment.SegMulti, df:getSegmentDifficulty(segment)} );
+		darts.push({ seg: segment.SegId, val: segment.SegVal, multi: segment.SegMulti, df: getSegmentDifficulty( segment ) });
 	}
 	return { 
 		diff: getFinishRouteDiff( segments ), 
@@ -177,7 +177,7 @@ function makeSetupRoute( segments, scoreBefore ){
 	let darts = [];
 	let scoreAfter = scoreBefore;
 	for( let segment of segments ){
-		darts.push({seg:segment.SegId, val:segment.SegVal, multi:segment.SegMulti, df:getSegmentDifficulty(segment)} );
+		darts.push({ seg: segment.SegId, val: segment.SegVal, multi: segment.SegMulti, df: getSegmentDifficulty( segment ) });
 		scoreAfter = scoreAfter - segment.SegVal;
 	}
 	return {
@@ -194,15 +194,15 @@ function makeSetupRoute( segments, scoreBefore ){
 }
 //==============================================================================
 function sortFinishRoutes( routes ){
-	routes.sort( (a, b)=>{ if( a.diff !== b.diff ){return a.diff - b.diff;} return a.text.localeCompare( b.text );});
+	routes.sort( ( a, b )=>{if( a.diff !== b.diff ){return b.diff - a.diff;} return a.text.localeCompare( b.text );});
 }
 //==============================================================================
 function sortSetupRoutes( routes ){
 	routes.sort(
-		(a, b)=>{
+		( a, b )=>{
 			if( a.dnAfter !== b.dnAfter ){return a.dnAfter - b.dnAfter;}
 			if( a.dnDiff !== b.dnDiff ){return b.dnDiff - a.dnDiff;}
-			if( a.diff !== b.diff ){return a.diff - b.diff;}
+			if( a.diff !== b.diff ){return b.diff - a.diff;}
 			let leaveCmp = compareLeaveDifficulty( a.leaveDF, b.leaveDF );
 			if( leaveCmp !== 0 ){return leaveCmp;}
 			if( a.scoreAfter !== b.scoreAfter ){return a.scoreAfter - b.scoreAfter;}
@@ -229,7 +229,7 @@ function routeKeyFromSegments( segments ){
 	return parts.join( "-" );
 }
 //==============================================================================
-function canContinueAfterScore( score ){return score > 1; }
+function canContinueAfterScore( score ){return score > 1;}
 //==============================================================================
 function getFinishRoutes( scoreBefore, dartsInHand, boardIndex ){
 	if( isBustScore( scoreBefore ) ){return [];}
@@ -300,7 +300,7 @@ function addThreeDartSetupRoutes( routes, routeKeys, score ){
 function getOneDartFinishRoutes( score ){
 	let routes = [], routeKeys = {};
 	let finishDoubles = getDblSegs();
-	for( let dbl of finishDoubles ){ if( dbl.SegVal === score ){addRouteIfNew( routes, routeKeys, [ dbl ] );} }
+	for( let dbl of finishDoubles ){if( dbl.SegVal === score ){addRouteIfNew( routes, routeKeys, [ dbl ] );}}
 	sortFinishRoutes( routes );
 	return routes.slice( 0, MAX_FINISH_ROUTES );
 }

@@ -1,7 +1,7 @@
 /*
 =============================================================================
 UI.js
-Version 1.0.3 2026-06-05 17h00
+Version 1.0.3 2026-06-06 17h30
 ============================================================================= 
 */
 
@@ -13,12 +13,12 @@ const DFC_UI = {
 	favDblEls: [],
 	favDblHeader: null,
 	favDblOpen: false,
-	favDblSliderCell: null,
+	favDblSliderLines: [],
 	favDblSliderRow: null,
 	favTrpEls: [],
 	favTrpHeader: null,
 	favTrpOpen: false,
-	favTrpSliderCell: null,
+	favTrpSliderLines: [],
 	favTrpSliderRow: null,
 	finishTableEls: [],
 	messagePanel: null,
@@ -51,30 +51,27 @@ function cacheUiElements(){
 	DFC_UI.scoreFinal = gid( "scoreFinal" );
 	DFC_UI.segmentEls = [ gid( "segmentDart1" ), gid( "segmentDart2" ), gid( "segmentDart3" ) ];
 	DFC_UI.valueEls = [ gid( "valueDart1" ), gid( "valueDart2" ), gid( "valueDart3" ) ];
-	DFC_UI.favDblHeader = DFC_UI.favDblEls[0].parentElement.previousElementSibling.children[0];
-	DFC_UI.favTrpHeader = DFC_UI.favTrpEls[0].parentElement.previousElementSibling.children[0];
+
+	DFC_UI.favDblHeader = gid( "favDblHeader" );
+	DFC_UI.favTrpHeader = gid( "favTrpHeader" );
 	DFC_UI.favDblHeader.style.cursor = "pointer";
 	DFC_UI.favTrpHeader.style.cursor = "pointer";
-	DFC_UI.favDblSliderRow = createFavoriteSliderRow( DFC_UI.favDblEls[0].parentElement );
-	DFC_UI.favTrpSliderRow = createFavoriteSliderRow( DFC_UI.favTrpEls[0].parentElement );
-	DFC_UI.favDblSliderCell = DFC_UI.favDblSliderRow.children[0];
-	DFC_UI.favTrpSliderCell = DFC_UI.favTrpSliderRow.children[0];
-}
-//==============================================================================
-function createFavoriteSliderRow( afterRow ){
-	let row = document.createElement( "tr" );
-	let cell = document.createElement( "td" );
-	row.className = "isHidden";
-	cell.colSpan = 3;
-	cell.style.padding = "6px";
-	row.appendChild( cell );
-	afterRow.after( row );
-	return row;
+	DFC_UI.favDblSliderRow = gid( "favDblSliderRow" );
+	DFC_UI.favTrpSliderRow = gid( "favTrpSliderRow" );
+	DFC_UI.favDblSliderLines = qsa( "[data-fav-slider-line='DBL']" );
+	DFC_UI.favTrpSliderLines = qsa( "[data-fav-slider-line='TRP']" );
 }
 //==============================================================================
 function bindUiEvents(){
 	for( let button of DFC_UI.numPadButtons ){button.addEventListener( "click", ()=>{handleNumPadInput( button.dataset.numpadValue );});}
 	for( let button of DFC_UI.dihButtons ){button.addEventListener( "click", ()=>{handleDihButtonClick( button );});}
+	for( let button of qsa( "[data-fav-delta]" ) ){button.addEventListener( "click", handleFavoriteStepButtonClick );}
+	for( let slider of qsa( "[data-fav-slider]" ) ){
+		slider.addEventListener( "input", handleFavoriteSliderInput );
+		slider.addEventListener( "change", handleFavoriteSliderChange );
+	}
+	for( let value of qsa( "[data-fav-value]" ) ){value.addEventListener( "click", handleFavoriteValueClick );}
+
 	DFC_UI.favDblHeader.addEventListener( "click", ()=>{toggleFavoriteSliderPanel( "DBL" );});
 	DFC_UI.favTrpHeader.addEventListener( "click", ()=>{toggleFavoriteSliderPanel( "TRP" );});
 	DFC_UI.btnScoreOk.addEventListener( "click", handleScoreOkClick );
@@ -200,90 +197,77 @@ function renderFavoriteLists(){
 	let favDblEntries = getFavEntriesSortedByWeight( "DBL" );
 	let favTrpEntries = getFavEntriesSortedByWeight( "TRP" );
 	for( let i = 0; i < 3; i++ ){
-		DFC_UI.favDblEls[i].textContent = favDblEntries[i].fav.seg + " " + formatFavWeight( favDblEntries[i].fav.favWeight );
-		DFC_UI.favTrpEls[i].textContent = favTrpEntries[i].fav.seg + " " + formatFavWeight( favTrpEntries[i].fav.favWeight );
+		DFC_UI.favDblEls[i].textContent = favDblEntries[i].fav.seg;
+		DFC_UI.favTrpEls[i].textContent = favTrpEntries[i].fav.seg;
 	}
 }
 //==============================================================================
 function renderFavoriteSliderPanels(){
+	let favDblEntries = getFavEntriesSortedByWeight( "DBL" );
+	let favTrpEntries = getFavEntriesSortedByWeight( "TRP" );
+
 	DFC_UI.favDblHeader.textContent = DFC_UI.favDblOpen ? "Fav Double ▾" : "Fav Double ▸";
 	DFC_UI.favTrpHeader.textContent = DFC_UI.favTrpOpen ? "Fav Treble ▾" : "Fav Treble ▸";
-	renderFavoriteSliderPanel( "DBL", DFC_UI.favDblSliderRow, DFC_UI.favDblSliderCell, DFC_UI.favDblOpen );
-	renderFavoriteSliderPanel( "TRP", DFC_UI.favTrpSliderRow, DFC_UI.favTrpSliderCell, DFC_UI.favTrpOpen );
+
+	if( DFC_UI.favDblOpen ){DFC_UI.favDblSliderRow.classList.remove( "isHidden" );}
+	else{DFC_UI.favDblSliderRow.classList.add( "isHidden" );}
+
+	if( DFC_UI.favTrpOpen ){DFC_UI.favTrpSliderRow.classList.remove( "isHidden" );}
+	else{DFC_UI.favTrpSliderRow.classList.add( "isHidden" );}
+
+	for( let i = 0; i < 3; i++ ){
+		updateFavoriteSliderLine( DFC_UI.favDblSliderLines[i], "DBL", favDblEntries[i] );
+		updateFavoriteSliderLine( DFC_UI.favTrpSliderLines[i], "TRP", favTrpEntries[i] );
+	}
 }
 //==============================================================================
-function renderFavoriteSliderPanel( favType, row, cell, isOpen ){
-	clearElement( cell );
-	if( !isOpen ){row.classList.add( "isHidden" ); return;}
-	row.classList.remove( "isHidden" );
-	for( let entry of getFavEntriesSortedByWeight( favType ) ){cell.appendChild( createFavoriteSliderLine( favType, entry ) );}
-}
-//==============================================================================
-function createFavoriteSliderLine( favType, entry ){
-	let line = document.createElement( "div" );
-	let label = document.createElement( "span" );
-	let minus = document.createElement( "button" );
-	let slider = document.createElement( "input" );
-	let plus = document.createElement( "button" );
-	let value = document.createElement( "span" );
+function updateFavoriteSliderLine( line, favType, entry ){
+	let label = line.querySelector( "[data-fav-label]" );
+	let minus = line.querySelector( "[data-fav-delta='-2']" );
+	let slider = line.querySelector( "[data-fav-slider]" );
+	let plus = line.querySelector( "[data-fav-delta='2']" );
+	let value = line.querySelector( "[data-fav-value]" );
 	let parity = entry.fav.favWeight % 2;
-	line.className = "favSliderLine";
+
+	line.dataset.favType = favType;
+	line.dataset.favIndex = entry.favIndex;
 	label.textContent = entry.fav.seg;
-	label.style.fontWeight = "bold";
-	minus.type = "button";
-	minus.className = "favStepButton";
-	minus.textContent = "−";
+
 	minus.dataset.favType = favType;
 	minus.dataset.favIndex = entry.favIndex;
-	minus.dataset.favDelta = "-2";
-	minus.addEventListener( "click", handleFavoriteStepButtonClick );
-	slider.type = "range";
-	slider.min = parity.toString();
-	slider.max = parity === 0 ? "100" : "99";
-	slider.step = "2";
-	slider.value = entry.fav.favWeight;
+
 	slider.dataset.favType = favType;
 	slider.dataset.favIndex = entry.favIndex;
+	slider.min = parity.toString();
+	slider.max = parity === 0 ? "100" : "99";
+	slider.value = entry.fav.favWeight;
 	paintFavoriteSlider( slider, entry.fav.favWeight );
-	slider.addEventListener( "input", handleFavoriteSliderInput );
-	slider.addEventListener( "change", handleFavoriteSliderChange );
-	plus.type = "button";
-	plus.className = "favStepButton";
-	plus.textContent = "+";
+
 	plus.dataset.favType = favType;
 	plus.dataset.favIndex = entry.favIndex;
-	plus.dataset.favDelta = "2";
-	plus.addEventListener( "click", handleFavoriteStepButtonClick );
-	value.className = "favWeightValue";
-	value.dataset.favValue = "true";
+
 	value.dataset.favType = favType;
 	value.dataset.favIndex = entry.favIndex;
 	value.textContent = formatFavWeight( entry.fav.favWeight );
-	value.title = "Click to set weight";
-	value.addEventListener( "click", handleFavoriteValueClick );
-	line.appendChild( label );
-	line.appendChild( minus );
-	line.appendChild( slider );
-	line.appendChild( plus );
-	line.appendChild( value );
-	return line;
 }
 //==============================================================================
 function paintFavoriteSlider( slider, favWeight ){slider.style.setProperty( "--fav-level", favWeight + "%" );}
 //==============================================================================
 function renderFavoriteSliderValues( favType ){
 	let favList = getFavList( favType );
-	let cell = favType === "DBL" ? DFC_UI.favDblSliderCell : DFC_UI.favTrpSliderCell;
-	let sliders = cell.querySelectorAll( "input[data-fav-type='" + favType + "']" );
-	for( let slider of sliders ){
+	let lines = favType === "DBL" ? DFC_UI.favDblSliderLines : DFC_UI.favTrpSliderLines;
+
+	for( let line of lines ){
+		let slider = line.querySelector( "[data-fav-slider]" );
+		let value = line.querySelector( "[data-fav-value]" );
 		let fav = favList[parseInt( slider.dataset.favIndex )];
-		let value = slider.parentElement.querySelector( "[data-fav-value]" );
 		let parity = fav.favWeight % 2;
+
 		slider.min = parity.toString();
 		slider.max = parity === 0 ? "100" : "99";
 		slider.value = fav.favWeight;
 		paintFavoriteSlider( slider, fav.favWeight );
-		if( value ){value.textContent = formatFavWeight( fav.favWeight );}
+		value.textContent = formatFavWeight( fav.favWeight );
 	}
 }
 //==============================================================================

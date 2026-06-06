@@ -3,8 +3,8 @@
 	<head>
 		<meta charset = "utf-8">
 		<meta name = "viewport" content = "width=device-width, initial-scale=1.0">
-		<title>DFC 1.0.3</title>
-		<!-- Version 1.0.3 2026-06-05 17h00 -->
+		<title>DFC 1.0.4</title>
+		<!-- Version 1.0.4 2026-06-06 17h30 -->
 		<link rel = "stylesheet" type = "text/css" href = "DFC.css">
 		<script src = "appState.js" defer></script>
 		<script src = "checkoutEngine.js" defer></script>
@@ -83,7 +83,7 @@
 						</tr>
 
 						<tr>
-							<th colspan = "3">Fav Double</th>
+							<th colspan = "3" id = "favDblHeader">Fav Double</th>
 						</tr>
 
 						<tr>
@@ -92,14 +92,70 @@
 							<td id = "favD3">D18</td>
 						</tr>
 
+						<tr class = "isHidden" id = "favDblSliderRow">
+							<td colspan = "3" style = "padding: 6px;">
+								<div class = "favSliderLine" data-fav-slider-line = "DBL">
+									<span style = "font-weight: bold;" data-fav-label = "true">D20</span>
+									<button class = "favStepButton" type = "button" data-fav-delta = "-2">−</button>
+									<input type = "range" min = "0" max = "100" step = "2" value = "0" data-fav-slider = "true">
+									<button class = "favStepButton" type = "button" data-fav-delta = "2">+</button>
+									<span class = "favWeightValue" title = "Click to set weight" data-fav-value = "true">0</span>
+								</div>
+
+								<div class = "favSliderLine" data-fav-slider-line = "DBL">
+									<span style = "font-weight: bold;" data-fav-label = "true">D16</span>
+									<button class = "favStepButton" type = "button" data-fav-delta = "-2">−</button>
+									<input type = "range" min = "0" max = "100" step = "2" value = "0" data-fav-slider = "true">
+									<button class = "favStepButton" type = "button" data-fav-delta = "2">+</button>
+									<span class = "favWeightValue" title = "Click to set weight" data-fav-value = "true">0</span>
+								</div>
+
+								<div class = "favSliderLine" data-fav-slider-line = "DBL">
+									<span style = "font-weight: bold;" data-fav-label = "true">D18</span>
+									<button class = "favStepButton" type = "button" data-fav-delta = "-2">−</button>
+									<input type = "range" min = "0" max = "100" step = "2" value = "0" data-fav-slider = "true">
+									<button class = "favStepButton" type = "button" data-fav-delta = "2">+</button>
+									<span class = "favWeightValue" title = "Click to set weight" data-fav-value = "true">0</span>
+								</div>
+							</td>
+						</tr>
+
 						<tr>
-							<th colspan = "3">Fav Treble</th>
+							<th colspan = "3" id = "favTrpHeader">Fav Treble</th>
 						</tr>
 
 						<tr>
 							<td id = "favT1">T20</td>
 							<td id = "favT2">T19</td>
 							<td id = "favT3">T18</td>
+						</tr>
+
+						<tr class = "isHidden" id = "favTrpSliderRow">
+							<td colspan = "3" style = "padding: 6px;">
+								<div class = "favSliderLine" data-fav-slider-line = "TRP">
+									<span style = "font-weight: bold;" data-fav-label = "true">T20</span>
+									<button class = "favStepButton" type = "button" data-fav-delta = "-2">−</button>
+									<input type = "range" min = "0" max = "100" step = "2" value = "0" data-fav-slider = "true">
+									<button class = "favStepButton" type = "button" data-fav-delta = "2">+</button>
+									<span class = "favWeightValue" title = "Click to set weight" data-fav-value = "true">0</span>
+								</div>
+
+								<div class = "favSliderLine" data-fav-slider-line = "TRP">
+									<span style = "font-weight: bold;" data-fav-label = "true">T19</span>
+									<button class = "favStepButton" type = "button" data-fav-delta = "-2">−</button>
+									<input type = "range" min = "0" max = "100" step = "2" value = "0" data-fav-slider = "true">
+									<button class = "favStepButton" type = "button" data-fav-delta = "2">+</button>
+									<span class = "favWeightValue" title = "Click to set weight" data-fav-value = "true">0</span>
+								</div>
+
+								<div class = "favSliderLine" data-fav-slider-line = "TRP">
+									<span style = "font-weight: bold;" data-fav-label = "true">T18</span>
+									<button class = "favStepButton" type = "button" data-fav-delta = "-2">−</button>
+									<input type = "range" min = "0" max = "100" step = "2" value = "0" data-fav-slider = "true">
+									<button class = "favStepButton" type = "button" data-fav-delta = "2">+</button>
+									<span class = "favWeightValue" title = "Click to set weight" data-fav-value = "true">0</span>
+								</div>
+							</td>
 						</tr>
 					</tbody>
 				</table>
