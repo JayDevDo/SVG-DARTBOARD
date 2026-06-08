@@ -1,7 +1,7 @@
 /*
 =============================================================================
 appState.js
-Version 1.0.3 2026-06-06 17h30
+Version 1.0.5 2026-06-08 16h30
 ============================================================================= 
 */
 const SCORES_JSON_PATH = "scores.json";
@@ -11,20 +11,19 @@ const DFC_SCORE_PLACEHOLDER = "___";
 const DFC_STATE = {
 	startScore: DFC_DEFAULT_SCORE,
 	scoreInput: DFC_DEFAULT_SCORE.toString(),
-	dartsInHand: 3,
-	darts: [ null, null, null ],
+	darts: [],
 	scores: [],
 	segments: [],
 	dataLoaded: false,
 	favDbls: [
-		{ seg: "D16", val: 32, favWeight: 40 },
 		{ seg: "D20", val: 40, favWeight: 40 },
+		{ seg: "D16", val: 32, favWeight: 40 },
 		{ seg: "D18", val: 36, favWeight: 20 }
 	],
 	favTrpls: [
-		{ seg: "T18", val: 54, favWeight: 40 },
-		{ seg: "T19", val: 57, favWeight: 30 },
-		{ seg: "T20", val: 60, favWeight: 30 }
+		{ seg: "T20", val: 60, favWeight: 38 },
+		{ seg: "T19", val: 57, favWeight: 38 },
+		{ seg: "T18", val: 54, favWeight: 24 }
 	],
 	messages: []
 };
@@ -35,7 +34,7 @@ async function loadJsonFile( path ){
 	return await response.json();
 }
 //==============================================================================
-function keyJsonArray(jsonArray,keyName){for(let item of jsonArray){jsonArray[item[keyName]] = item;} return jsonArray;}
+function keyJsonArray( jsonArray, keyName ){for( let item of jsonArray ){jsonArray[item[keyName]] = item;} return jsonArray;}
 //==============================================================================
 async function loadDFCData(){
 	let data = await Promise.all([ loadJsonFile( SCORES_JSON_PATH ), loadJsonFile( SEGMENTS_JSON_PATH ) ]);
@@ -66,7 +65,6 @@ function deleteScoreInputDigit(){
 //==============================================================================
 function getParsedScoreInput(){
 	if( DFC_STATE.scoreInput === DFC_SCORE_PLACEHOLDER ){return DFC_DEFAULT_SCORE;}
-
 	let parsedScore = parseInt( DFC_STATE.scoreInput );
 	if( isNaN( parsedScore ) ){return DFC_DEFAULT_SCORE;}
 	return parsedScore;
@@ -74,13 +72,16 @@ function getParsedScoreInput(){
 //==============================================================================
 function setStartScore( score ){DFC_STATE.startScore = parseInt( score ); resetDarts();}
 //==============================================================================
-function setDartsInHand( dartsInHand ){DFC_STATE.dartsInHand = parseInt(dartsInHand); resetDartsFrom( DFC_STATE.dartsInHand );}
+function resetDarts(){DFC_STATE.darts = [];}
 //==============================================================================
-function resetDarts(){DFC_STATE.darts = [ null, null, null ];}
+function resetDartsFrom( dartIndex ){DFC_STATE.darts.splice( dartIndex );}
 //==============================================================================
-function resetDartsFrom( dartIndex ){for( let i = dartIndex; i < 3; i++ ){DFC_STATE.darts[i] = null;}}
-//==============================================================================
-function setDartSegment( dartIndex, segment ){DFC_STATE.darts[dartIndex] = segment; resetDartsFrom( dartIndex + 1 );}
+function setDartSegment( dartIndex, segment ){
+	if( dartIndex > DFC_STATE.darts.length || dartIndex > 2 ){return false;}
+	DFC_STATE.darts[dartIndex] = segment;
+	resetDartsFrom( dartIndex + 1 );
+	return true;
+}
 //==============================================================================
 function getDartSegment( dartIndex ){return DFC_STATE.darts[dartIndex];}
 //==============================================================================
@@ -95,6 +96,16 @@ function getDartValue( dartIndex ){
 	if( !segment ){return 0;}
 	return segment.SegVal;
 }
+//==============================================================================
+function getSB_FromIdx( dartIndex ){
+	let score = DFC_STATE.startScore;
+	for( let i = 0; i < dartIndex; i++ ){score = score - getDartValue( i );}
+	return score;
+}
+//==============================================================================
+function getCurrentScore(){return getSB_FromIdx( DFC_STATE.darts.length );}
+//==============================================================================
+function getDih(){return 3 - DFC_STATE.darts.length;}
 //==============================================================================
 function hasDFCData(){return DFC_STATE.dataLoaded;}
 //==============================================================================

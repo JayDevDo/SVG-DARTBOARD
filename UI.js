@@ -1,7 +1,7 @@
 /*
 =============================================================================
 UI.js
-Version 1.0.3 2026-06-06 17h30
+Version 1.0.5 2026-06-08 16h30
 ============================================================================= 
 */
 
@@ -9,7 +9,6 @@ const DFC_UI = {
 	boardsBuilt: false,
 	btnResetBoards: null,
 	btnScoreOk: null,
-	dihButtons: [],
 	favDblEls: [],
 	favDblHeader: null,
 	favDblOpen: false,
@@ -39,7 +38,6 @@ function qsa( selector ){return document.querySelectorAll( selector );}
 function cacheUiElements(){
 	DFC_UI.btnResetBoards = gid( "btnResetBoards" );
 	DFC_UI.btnScoreOk = gid( "btnScoreOk" );
-	DFC_UI.dihButtons = qsa( ".dihButton" );
 	DFC_UI.favDblEls = [ gid( "favD1" ), gid( "favD2" ), gid( "favD3" ) ];
 	DFC_UI.favTrpEls = [ gid( "favT1" ), gid( "favT2" ), gid( "favT3" ) ];
 	DFC_UI.finishTableEls = [ gid( "finishTableDart1" ), gid( "finishTableDart2" ), gid( "finishTableDart3" ) ];
@@ -64,7 +62,6 @@ function cacheUiElements(){
 //==============================================================================
 function bindUiEvents(){
 	for( let button of DFC_UI.numPadButtons ){button.addEventListener( "click", ()=>{handleNumPadInput( button.dataset.numpadValue );});}
-	for( let button of DFC_UI.dihButtons ){button.addEventListener( "click", ()=>{handleDihButtonClick( button );});}
 	for( let button of qsa( "[data-fav-delta]" ) ){button.addEventListener( "click", handleFavoriteStepButtonClick );}
 	for( let slider of qsa( "[data-fav-slider]" ) ){
 		slider.addEventListener( "input", handleFavoriteSliderInput );
@@ -97,11 +94,8 @@ async function initDFC(){
 }
 //==============================================================================
 function handleNumPadInput( value ){
-	if( value === "delete" ){
-		deleteScoreInputDigit();
-	}else{
-		addScoreInputDigit( value );
-	} 
+	if( value === "delete" ){deleteScoreInputDigit();}
+	else{addScoreInputDigit( value );}
 	renderScoreInput();
 }
 //==============================================================================
@@ -109,17 +103,16 @@ function handleScoreOkClick(){
 	if( !hasDFCData() ){addMessage( "Data is not loaded yet." ); renderMessages(); return;}
 	clearMessages();
 	setStartScore( getParsedScoreInput() );
+	clearDartBoardsAndTables();
 	DFC_UI.boardsBuilt = true;
 	addMessage( "Score set to " + DFC_STATE.startScore + "." );
 	renderFullUi();
 }
 //==============================================================================
-function handleResetBoardsClick(){resetDarts(); addMessage( "Dartboards reset." ); renderFullUi();}
-//==============================================================================
-function handleDihButtonClick( button ){
-	setDartsInHand( button.dataset.dih );
+function handleResetBoardsClick(){
 	resetDarts();
-	addMessage( DFC_STATE.dartsInHand + " darts in hand." );
+	clearDartBoardsAndTables();
+	addMessage( "Dartboards reset." );
 	renderFullUi();
 }
 //==============================================================================
@@ -134,7 +127,7 @@ function handleFavoriteSliderInput( event ){
 	setBalancedFavWeight( slider.dataset.favType, slider.dataset.favIndex, slider.value );
 	renderFavoriteLists();
 	renderFavoriteSliderValues( slider.dataset.favType );
-	if( DFC_UI.boardsBuilt ){renderAllDartBoards(); renderFinishTablesFrom( 0 );}
+	if( DFC_UI.boardsBuilt ){renderActiveDartBoardAndTable();}
 }
 //==============================================================================
 function handleFavoriteSliderChange(){renderFavoriteSliderPanels();}
@@ -144,7 +137,7 @@ function handleFavoriteStepButtonClick( event ){
 	adjustBalancedFavWeight( button.dataset.favType, button.dataset.favIndex, button.dataset.favDelta );
 	renderFavoriteLists();
 	renderFavoriteSliderPanels();
-	if( DFC_UI.boardsBuilt ){renderAllDartBoards(); renderFinishTablesFrom( 0 );}
+	if( DFC_UI.boardsBuilt ){renderActiveDartBoardAndTable();}
 }
 //==============================================================================
 function handleFavoriteValueClick( event ){
@@ -157,26 +150,23 @@ function handleFavoriteValueClick( event ){
 	setFavWeightExact( valueEl.dataset.favType, favIndex, inputValue );
 	renderFavoriteLists();
 	renderFavoriteSliderPanels();
-	if( DFC_UI.boardsBuilt ){renderAllDartBoards(); renderFinishTablesFrom( 0 );}
+	if( DFC_UI.boardsBuilt ){renderActiveDartBoardAndTable();}
 }
 //==============================================================================
 function onDartBoardSegmentClick( boardIndex, segment ){
 	if( !DFC_UI.boardsBuilt ){return;}
-	setDartSegment( boardIndex, segment );
+	if( boardIndex !== DFC_STATE.darts.length ){return;}
+	if( !setDartSegment( boardIndex, segment ) ){return;}
 	addMessage( "Dart " + ( boardIndex + 1 ) + ": " + segment.SegId + " hit for " + segment.SegVal + "." );
-	renderScorePanels();
-	renderDartBoardsFrom( boardIndex );
-	renderFinishTablesFrom( boardIndex );
-	renderMessages();
+	renderFullUi();
 }
 //==============================================================================
 function renderFullUi(){
 	renderScoreInput();
 	renderFavoriteLists();
 	renderFavoriteSliderPanels();
-	renderDihButtons();
 	renderScorePanels();
-	if( DFC_UI.boardsBuilt ){renderAllDartBoards(); renderFinishTablesFrom( 0 );}
+	if( DFC_UI.boardsBuilt ){renderActiveDartBoardAndTable();}
 	renderMessages();
 }
 //==============================================================================
@@ -271,13 +261,6 @@ function renderFavoriteSliderValues( favType ){
 	}
 }
 //==============================================================================
-function renderDihButtons(){
-	for( let button of DFC_UI.dihButtons ){
-		if( parseInt( button.dataset.dih ) === DFC_STATE.dartsInHand ){button.setAttribute( "data-selected", "true" );}
-		else{button.removeAttribute( "data-selected" );}
-	}
-}
-//==============================================================================
 function renderScorePanels(){
 	for( let dartIndex = 0; dartIndex < 3; dartIndex++ ){
 		let scoreBefore = getSB_FromIdx( dartIndex );
@@ -291,44 +274,64 @@ function renderScorePanels(){
 	DFC_UI.scoreFinal.textContent = getDisplayFinalScore();
 }
 //==============================================================================
-function getDisplayFinalScore(){
-	let finalScore = DFC_STATE.startScore;
-	for( let dartIndex = 0; dartIndex < 3; dartIndex++ ){finalScore = finalScore - getDartValue( dartIndex );}
-	return finalScore;
+function getDisplayFinalScore(){return getCurrentScore();}
+//==============================================================================
+function clearDartBoardsAndTables(){
+	for( let i = 1; i <= 3; i++ ){
+		clearElement( gid( "dartBoard" + i ) );
+		clearElement( DFC_UI.finishTableEls[i - 1] );
+	}
 }
 //==============================================================================
-function renderFinishTablesFrom( startBoardIndex = 0 ){
-	for( let boardIndex = startBoardIndex; boardIndex < 3; boardIndex++){ renderFinishTable( boardIndex );}
+function renderActiveDartBoardAndTable(){
+	let dartNr = DFC_STATE.darts.length + 1;
+	let dartIndex = dartNr - 1;
+	if( !DFC_UI.boardsBuilt || dartNr > 3 ){return;}
+
+	renderDartBoard({
+		targetId: "dartBoard" + dartNr,
+		boardIndex: dartIndex,
+		scoreBefore: getCurrentScore(),
+		segments: DFC_STATE.segments,
+		selectedSegmentId: ""
+	});
+
+	renderFinishTable( dartNr );
 }
 //==============================================================================
-function renderFinishTable( boardIndex ){
-	let targetElement = DFC_UI.finishTableEls[boardIndex];
-	let scoreBefore = getSB_FromIdx( boardIndex );
-	let dartsInHand = 3 - boardIndex;
-	let routes = getFinishRoutes( scoreBefore, dartsInHand, boardIndex );
+function renderFinishTable( dartNr ){
+	let dartIndex = dartNr - 1;
+	let targetElement = DFC_UI.finishTableEls[dartIndex];
+	let scoreBefore = getCurrentScore();
+	let dih = 3 - DFC_STATE.darts.length;
+	let routes = getRoutes( scoreBefore, dih );
+
 	clearElement( targetElement );
 	if( routes.length === 0 ){renderNoFinishRoute( targetElement ); return;}
+
 	let table = document.createElement( "table" );
 	let thead = document.createElement( "thead" );
 	let tbody = document.createElement( "tbody" );
-	renderFinishTableHeader( thead, boardIndex );
-	renderFinishTableBody( tbody, routes, boardIndex );
+
+	renderFinishTableHeader( thead, dartNr );
+	renderFinishTableBody( tbody, routes, dartNr );
+
 	table.appendChild( thead );
 	table.appendChild( tbody );
 	targetElement.appendChild( table );
 }
 //==============================================================================
-function renderFinishTableHeader( thead, boardIndex ){
+function renderFinishTableHeader( thead, dartNr ){
 	let row = document.createElement( "tr" );
-	for( let dartIndex = boardIndex; dartIndex < 3; dartIndex++ ){appendTableCell( row, "th", "D" + ( dartIndex + 1 ) );}
+	for( let n = dartNr; n <= 3; n++ ){appendTableCell( row, "th", "Dart " + n );}
 	appendTableCell( row, "th", "DF" );
 	thead.appendChild( row );
 }
 //==============================================================================
-function renderFinishTableBody( tbody, routes, boardIndex ){
+function renderFinishTableBody( tbody, routes, dartNr ){
 	for( let route of routes ){
 		let row = document.createElement( "tr" );
-		for( let dartIndex = boardIndex; dartIndex < 3; dartIndex++ ){appendTableCell( row, "td", getRouteDartText( route, dartIndex - boardIndex, boardIndex ) );}
+		for( let n = dartNr; n <= 3; n++ ){appendTableCell( row, "td", getRouteDartText( route, n - dartNr, dartNr ) );}
 		appendTableCell( row, "td", route.diff );
 		tbody.appendChild( row );
 	}
@@ -341,10 +344,10 @@ function appendTableCell( row, tagName, text ){
 	row.appendChild( cell );
 }
 //==============================================================================
-function getRouteDartText( route, routeDartIndex, boardIndex ){
+function getRouteDartText( route, routeDartIndex, dartNr ){
 	if( !route.darts[routeDartIndex] ){return "DNN";}
 	let dartText = route.darts[routeDartIndex].seg;
-	if( boardIndex === 2 && route.type === "setup" ){return dartText + " (" + getScoreAfterSegmentDisplay( route.scoreAfter ) + ")";}
+	if( dartNr === 3 && route.type === "setup" ){return dartText + " (" + getScoreAfterSegmentDisplay( route.scoreAfter ) + ")";}
 	return dartText;
 }
 //==============================================================================
