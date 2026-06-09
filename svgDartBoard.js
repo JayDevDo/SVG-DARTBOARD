@@ -2,14 +2,14 @@
 =============================================================================
 svgDartBoard.js
 Version 1.0.5 2026-06-08 16h30
-============================================================================= 
+=============================================================================
 */
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const BOARD_RADII = [0,0.0500,0.1200,0.4900,0.5900,0.8100,0.8900,0.8907,0.9999];
+const BOARD_RADII = [ 0, 0.0500, 0.1200, 0.4900, 0.5900, 0.8100, 0.8900, 0.8907, 0.9999 ];
 const BOARD_TEXT_COLOR = "#99CCFF";
 const BOARD_TEXT_STROKE = "#000000";
-const SELECTED_SEGMENT_CLASSES = ["","dart1Selected","dart2Selected","dart3Selected"];
+const SELECTED_SEGMENT_COLOR = "#99CCFF";
 
 //==============================================================================
 function degToRad( deg ){return ( deg - 90 ) * Math.PI / 180;}
@@ -21,6 +21,7 @@ function polarToCartesian( cx, cy, radius, angleDeg ){
 //==============================================================================
 function annularSectorPath( cx, cy, innerRadius, outerRadius, startAngle, endAngle ){
 	let angleSize = Math.abs( endAngle - startAngle );
+
 	if( angleSize >= 359.99 ){
 		if( innerRadius <= 0 ){
 			return [
@@ -28,7 +29,7 @@ function annularSectorPath( cx, cy, innerRadius, outerRadius, startAngle, endAng
 				"A", outerRadius, outerRadius, 0, 1, 1, cx, cy + outerRadius,
 				"A", outerRadius, outerRadius, 0, 1, 1, cx, cy - outerRadius,
 				"Z"
-			].join(" ");
+			].join( " " );
 		}
 
 		return [
@@ -40,7 +41,7 @@ function annularSectorPath( cx, cy, innerRadius, outerRadius, startAngle, endAng
 			"A", innerRadius, innerRadius, 0, 1, 0, cx, cy + innerRadius,
 			"A", innerRadius, innerRadius, 0, 1, 0, cx, cy - innerRadius,
 			"Z"
-		].join(" ");
+		].join( " " );
 	}
 
 	let outerStart = polarToCartesian( cx, cy, outerRadius, startAngle );
@@ -55,7 +56,7 @@ function annularSectorPath( cx, cy, innerRadius, outerRadius, startAngle, endAng
 		"L", innerStart.x, innerStart.y,
 		"A", innerRadius, innerRadius, 0, largeArcFlag, 0, innerEnd.x, innerEnd.y,
 		"Z"
-	].join(" ");
+	].join( " " );
 }
 //==============================================================================
 function segmentCenterPoint( cx, cy, radius, startAngle, endAngle ){
@@ -74,6 +75,8 @@ function getBoardRenderSize( targetElement ){
 	return 300;
 }
 //==============================================================================
+function setSelectedDartSegmentColor( pathId ){let path = document.getElementById( pathId ); if( path ){path.style.fill = SELECTED_SEGMENT_COLOR;}}
+//==============================================================================
 function getSegmentRenderData( segment, scoreBefore, dih ){
 	let scoreInfo = DFC_STATE.scores[scoreBefore];
 	let scoreAfter = scoreBefore - segment.SegVal;
@@ -91,36 +94,22 @@ function getSegmentRenderData( segment, scoreBefore, dih ){
 		SB: scoreBefore,
 		SBIsFinish: scoreInfo ? scoreInfo.ISFINISH : false,
 		SegId: segment.SegId,
+		SegGrp: segment.SegGrp,
 		SegVal: segment.SegVal,
+		SegMulti: segment.SegMulti,
+		SegDF: segment.SegDF,
 		DIH: dih,
 		DN_Bfr: dnBefore,
 		SA: scoreAfter,
 		IsWinner: isWinner,
 		DN_Aftr: dnAfter,
 		DN_Diff: dnDiff,
-		NextDbClrNr: nextDbClrNr,
 		SegOgClr: segment.SegColor,
 		SegDNClr: NDP_COLORS[nextDbClrNr]
 	};
 }
 //==============================================================================
-function setSegmentDataAttributes( path, data ){
-	path.setAttribute( "data-sb", data.SB );
-	path.setAttribute( "data-sbisfinish", data.SBIsFinish );
-	path.setAttribute( "data-segid", data.SegId );
-	path.setAttribute( "data-segval", data.SegVal );
-	path.setAttribute( "data-dih", data.DIH );
-	path.setAttribute( "data-dn-bfr", data.DN_Bfr );
-	path.setAttribute( "data-sa", data.SA );
-	path.setAttribute( "data-iswinner", data.IsWinner );
-	path.setAttribute( "data-dn-aftr", data.DN_Aftr );
-	path.setAttribute( "data-dn-diff", data.DN_Diff );
-	path.setAttribute( "data-nextdbclrnr", data.NextDbClrNr );
-	path.setAttribute( "data-segogclr", data.SegOgClr );
-	path.setAttribute( "data-segdnclr", data.SegDNClr );
-}
-//==============================================================================
-function createBoardSegmentPath( segment, boardIndex, boardSize, scoreBefore, selectedSegmentId, dih ){
+function createBoardSegmentPath( segment, boardIndex, boardSize, scoreBefore, dih ){
 	let center = boardSize / 2;
 	let boardRadius = boardSize * 0.4995;
 	let innerRadius = boardRadius * BOARD_RADII[segment.SegInRad];
@@ -131,21 +120,13 @@ function createBoardSegmentPath( segment, boardIndex, boardSize, scoreBefore, se
 
 	path.setAttribute( "d", annularSectorPath( center, center, innerRadius, outerRadius, segment.SegSA, segment.SegEA ) );
 	path.setAttribute( "id", "board" + ( boardIndex + 1 ) + "_" + segment.SegId );
-	path.setAttribute( "data-board-index", boardIndex );
-	path.setAttribute( "data-seg-id", segment.SegId );
-	path.setAttribute( "data-seg-val", segment.SegVal );
-	path.setAttribute( "data-seg-grp", segment.SegGrp );
-	path.setAttribute( "data-seg-multi", segment.SegMulti );
-	setSegmentDataAttributes( path, segmentData );
 
 	path.segmentData = segmentData;
 	path.style.fill = segmentColor;
 	path.style.stroke = "#C0C0C0";
 	path.style.strokeWidth = "0";
 
-	if( selectedSegmentId === segment.SegId ){path.classList.add( SELECTED_SEGMENT_CLASSES[boardIndex + 1] );}
-
-	path.addEventListener( "click", ()=>{onDartBoardSegmentClick( boardIndex, segment, segmentData );});
+	path.addEventListener( "click", ()=>{onDartBoardSegmentClick( path.id, segmentData );});
 
 	return path;
 }
@@ -161,8 +142,6 @@ function createBoardSegmentText( segment, boardIndex, boardSize ){
 	text.setAttribute( "y", textPoint.y );
 	text.setAttribute( "text-anchor", "middle" );
 	text.setAttribute( "dominant-baseline", "middle" );
-	text.setAttribute( "data-board-index", boardIndex );
-	text.setAttribute( "data-seg-grp", segment.SegGrp );
 
 	text.style.fill = BOARD_TEXT_COLOR;
 	text.style.stroke = BOARD_TEXT_STROKE;
@@ -178,11 +157,11 @@ function createBoardSegmentText( segment, boardIndex, boardSize ){
 }
 //==============================================================================
 function renderDartBoard( options ){
+	console.log( "renderDartBoard: starting" );
 	let targetElement = document.getElementById( options.targetId );
 	let boardIndex = options.boardIndex;
 	let scoreBefore = options.scoreBefore;
 	let segments = options.segments;
-	let selectedSegmentId = options.selectedSegmentId || "";
 	let dih = options.dih;
 	let boardSize = getBoardRenderSize( targetElement );
 
@@ -196,7 +175,6 @@ function renderDartBoard( options ){
 	svg.setAttribute( "viewBox", "0 0 " + boardSize + " " + boardSize );
 	svg.setAttribute( "width", boardSize );
 	svg.setAttribute( "height", boardSize );
-	svg.setAttribute( "data-board-index", boardIndex );
 	svg.setAttribute( "role", "img" );
 	svg.setAttribute( "aria-label", "Dartboard " + ( boardIndex + 1 ) );
 
@@ -219,7 +197,7 @@ function renderDartBoard( options ){
 	svg.appendChild( textGroup );
 
 	for( let segment of segments ){
-		segmentGroup.appendChild( createBoardSegmentPath( segment, boardIndex, boardSize, scoreBefore, selectedSegmentId, dih ) );
+		segmentGroup.appendChild( createBoardSegmentPath( segment, boardIndex, boardSize, scoreBefore, dih ) );
 	}
 
 	for( let segment of segments ){
@@ -232,27 +210,27 @@ function renderDartBoard( options ){
 }
 //==============================================================================
 function renderAllDartBoards(){
+	console.log( "renderAllDartBoards: starting" );
 	for( let boardIndex = 0; boardIndex < 3; boardIndex++ ){
 		renderDartBoard({
 			targetId: "dartBoard" + ( boardIndex + 1 ),
 			boardIndex: boardIndex,
 			scoreBefore: getSB_FromIdx( boardIndex ),
 			dih: 3 - boardIndex,
-			segments: DFC_STATE.segments,
-			selectedSegmentId: DFC_STATE.darts[boardIndex] ? DFC_STATE.darts[boardIndex].SegId : ""
+			segments: DFC_STATE.segments
 		});
 	}
 }
 //==============================================================================
 function renderDartBoardsFrom( startBoardIndex ){
+	console.log( "renderDartBoardsFrom: starting" );
 	for( let boardIndex = startBoardIndex; boardIndex < 3; boardIndex++ ){
 		renderDartBoard({
 			targetId: "dartBoard" + ( boardIndex + 1 ),
 			boardIndex: boardIndex,
 			scoreBefore: getSB_FromIdx( boardIndex ),
 			dih: 3 - boardIndex,
-			segments: DFC_STATE.segments,
-			selectedSegmentId: DFC_STATE.darts[boardIndex] ? DFC_STATE.darts[boardIndex].SegId : ""
+			segments: DFC_STATE.segments
 		});
 	}
 }

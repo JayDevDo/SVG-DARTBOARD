@@ -3,14 +3,16 @@
 	<head>
 		<meta charset = "utf-8">
 		<meta name = "viewport" content = "width=device-width, initial-scale=1.0">
-		<title>DFC 1.0.5</title>
-		<!-- Version 1.0.5 2026-06-08 16h30 -->
+		<title>DFC 1.0.6</title>
+		<!-- Version 1.0.6 2026-06-09 12h30  -->
 		<link rel = "stylesheet" type = "text/css" href = "DFC.css">
+		<script src = "init.js" defer></script>
 		<script src = "appState.js" defer></script>
 		<script src = "checkoutEngine.js" defer></script>
 		<script src = "svgDartBoard.js" defer></script>
+		<script src = "targetMatrix.js" defer></script>
+		<script src = "favHandler.js" defer></script>
 		<script src = "UI.js" defer></script>
-		<script src = "targetMatrix.js"></script>
 	</head>
 
 	<body id = "pageBody">
@@ -100,6 +102,8 @@
 									<button class = "favStepButton" type = "button" data-fav-delta = "2">+</button>
 									<span class = "favWeightValue" title = "Click to set weight" data-fav-value = "true">0</span>
 								</div>
+
+								<button class = "wideButton" type = "button" id = "btnApplyFavDblValues">Apply Double Fav Values</button>
 							</td>
 						</tr>
 
@@ -138,6 +142,8 @@
 									<button class = "favStepButton" type = "button" data-fav-delta = "2">+</button>
 									<span class = "favWeightValue" title = "Click to set weight" data-fav-value = "true">0</span>
 								</div>
+
+								<button class = "wideButton" type = "button" id = "btnApplyFavTrpValues">Apply Treble Fav Values</button>
 							</td>
 						</tr>
 					</tbody>

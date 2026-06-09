@@ -1,48 +1,10 @@
 /*
 =============================================================================
 appState.js
-Version 1.0.5 2026-06-08 16h30
-============================================================================= 
+Version 1.0.6 2026-06-09 12h30
+=============================================================================
 */
-const SCORES_JSON_PATH = "scores.json";
-const SEGMENTS_JSON_PATH = "jsonDartBoard102.json";
-const DFC_DEFAULT_SCORE = 121;
-const DFC_SCORE_PLACEHOLDER = "___";
-const DFC_STATE = {
-	startScore: DFC_DEFAULT_SCORE,
-	scoreInput: DFC_DEFAULT_SCORE.toString(),
-	darts: [],
-	scores: [],
-	segments: [],
-	dataLoaded: false,
-	favDbls: [
-		{ seg: "D20", val: 40, favWeight: 40 },
-		{ seg: "D16", val: 32, favWeight: 40 },
-		{ seg: "D18", val: 36, favWeight: 20 }
-	],
-	favTrpls: [
-		{ seg: "T20", val: 60, favWeight: 38 },
-		{ seg: "T19", val: 57, favWeight: 38 },
-		{ seg: "T18", val: 54, favWeight: 24 }
-	],
-	messages: []
-};
-//==============================================================================
-async function loadJsonFile( path ){
-	let response = await fetch( path );
-	if( !response.ok ){throw new Error( "Could not load " + path + " status " + response.status );}
-	return await response.json();
-}
-//==============================================================================
-function keyJsonArray( jsonArray, keyName ){for( let item of jsonArray ){jsonArray[item[keyName]] = item;} return jsonArray;}
-//==============================================================================
-async function loadDFCData(){
-	let data = await Promise.all([ loadJsonFile( SCORES_JSON_PATH ), loadJsonFile( SEGMENTS_JSON_PATH ) ]);
-	DFC_STATE.scores = data[0];
-	DFC_STATE.segments = keyJsonArray( data[1], "SegId" );
-	DFC_STATE.dataLoaded = true;
-	return DFC_STATE;
-}
+
 //==============================================================================
 function setScoreInput( value ){DFC_STATE.scoreInput = value.toString();}
 //==============================================================================
@@ -217,6 +179,7 @@ function rebalanceFavWeightsAfterExactSet( favList, targetIndex ){
 	let total = 0;
 	for( let fav of favList ){total = total + fav.favWeight;}
 	let diff = 100 - total;
+
 	while( diff > 0 ){
 		let addIndex = favList[otherIndexes[0]].favWeight <= favList[otherIndexes[1]].favWeight ? otherIndexes[0] : otherIndexes[1];
 		favList[addIndex].favWeight++;
