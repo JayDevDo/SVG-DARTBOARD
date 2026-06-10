@@ -1,7 +1,7 @@
 /*
 =============================================================================
 UI.js
-Version 1.0.6 2026-06-09 12h30
+Version 1.0.6 2026-06-10 20h00
 =============================================================================
 */
 
@@ -180,7 +180,7 @@ function getTargetMatrixRows( SB, dih ){
 		if( a.SADN !== b.SADN ){return a.SADN - b.SADN;}
 		if( a.segDF !== b.segDF ){return a.segDF - b.segDF;}
 		if( a.mtrxDN !== b.mtrxDN ){return a.mtrxDN - b.mtrxDN;}
-		if( a.mtrxDF !== b.mtrxDF ){return b.mtrxDF - a.mtrxDF;}
+		if( a.mtrxDF !== b.mtrxDF ){return a.mtrxDF - b.mtrxDF;}
 		return b.seg.localeCompare( a.seg );
 	});
 

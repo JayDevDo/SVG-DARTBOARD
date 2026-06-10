@@ -1,10 +1,18 @@
 /*=============================================================================
 targetMatrix.js
-Version 1.0.6 2026-06-09 12h30
+Version 1.0.6 2026-06-10 20h00
 =============================================================================*/
 
+const MATRIX_CENTER_AXIS_SAME_DN_REWARD = 5; // %
+
+//==============================================================================
 function scrAftrEval( SA, DIH ){
 	let scrInfo = DFC_STATE.scores[SA];
+	console.log(
+		"scrAftrEval | SA: ", SA, "DIH: ", DIH, 
+		"scrInfo-EZ: ", scrInfo.EZVISITPROFILE, 
+		"scrInfo-N: ", scrInfo.VISITPROFILE 
+	) ;
 	if( !scrInfo ){
 		return {
 			EZP: { DF: profileDFMap["BUST-BUST-BUST"][0], DN: profileDFMap["BUST-BUST-BUST"][1], ALIVE: false },
@@ -102,10 +110,15 @@ function getMatrixEval( matrix, SB, DIH ){
 	let ttlDN = 0;
 	let ttlDF = 0;
 	let segsDone = 0;
+	let resMtrx = [];
 
-	for( let row of matrix ){
-		for( let segId of row ){
+	for( let rwIdx = 0; rwIdx < matrix.length; rwIdx++ ){
+		resMtrx[rwIdx] = [];
+
+		for( let colIdx = 0; colIdx < matrix[rwIdx].length; colIdx++ ){
+			let segId = matrix[rwIdx][colIdx];
 			let segment = DFC_STATE.segmentById[segId];
+			resMtrx[rwIdx][colIdx] = [ 99, 99 ];
 			if( !segment ){continue;}
 
 			let segValue = segment.SegVal || 0;
@@ -119,14 +132,23 @@ function getMatrixEval( matrix, SB, DIH ){
 				ttlDN = ttlDN + segDN;
 				ttlDF = ttlDF + segDF;
 			}
+
+			resMtrx[rwIdx][colIdx] = [ segDN, segDF ];
 		}
 	}
 
 	if( segsDone === 0 ){return { DN: 999, DF: 999 };}
 
+	let avgDN = ttlDN / segsDone;
+	let avgDF = ttlDF / segsDone;
+
+	if( resMtrx[0][1][0] < 99 && resMtrx[0][1][0] === resMtrx[1][1][0] && resMtrx[1][1][0] === resMtrx[2][1][0] ){
+		avgDF = avgDF * ( 1 - MATRIX_CENTER_AXIS_SAME_DN_REWARD / 100 );
+	}
+
 	return {
-		DN: parseFloat(( ttlDN / segsDone ).toFixed( 2 )),
-		DF: parseFloat(( ttlDF / segsDone ).toFixed( 2 ))
+		DN: parseFloat(( avgDN ).toFixed( 2 )),
+		DF: parseFloat(( Math.max( 0, avgDF ) ).toFixed( 2 ))
 	};
 }
 //==============================================================================
