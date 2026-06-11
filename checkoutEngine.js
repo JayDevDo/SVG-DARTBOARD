@@ -1,7 +1,7 @@
 /*
 =============================================================================
 checkoutEngine.js
-Version 1.0.6 2026-06-10 20h00
+Version 1.0.6b 2026-06-10 22h00
 =============================================================================
 */
 
@@ -38,7 +38,7 @@ function getProfileDF( profile ){
 }
 //==============================================================================
 function makeRoute( segment, scoreBefore, scoreAfter ){
-	let scoreInfo = DFC_STATE.scores[scoreAfter];isBustScore
+	let scoreInfo = DFC_STATE.scores[scoreAfter];
 	let leaveProfile = scoreInfo.EZVISITPROFILE;
 	let segmentDF = segment.SegDF;
 	let diff = segmentDF + ( scoreInfo.DARTSNEEDED * LEAVE_DN_MULTIPLIER ) + getProfileDF( leaveProfile );

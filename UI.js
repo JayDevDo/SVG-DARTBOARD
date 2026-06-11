@@ -1,7 +1,7 @@
 /*
 =============================================================================
 UI.js
-Version 1.0.6 2026-06-10 20h00
+Version 1.0.6b 2026-06-10 22h00
 =============================================================================
 */
 
@@ -152,15 +152,15 @@ function renderActiveDartBoardAndTable(){
 function getTargetMatrixRows( SB, dih ){
 	console.log( "getTargetMatrixRows: starting" );
 	let rows = [];
-	const SBDN = DFC_STATE.scores[SB].DARTSNEEDED ;
+	const SBDN = DFC_STATE.scores[SB].DARTSNEEDED;
 
 	for( let segment of DFC_STATE.segments ){
-		if( segment.SegMulti <= 0 || segment.SegInRad === 2 ){continue; }
-		if( SBDN === 3 && segment.SegMulti === 2){continue;}
+		if( segment.SegMulti <= 0 || segment.SegInRad === 2 ){continue;}
+		if( SBDN === 3 && segment.SegMulti === 2 ){continue;}
 
 		let SA = SB - segment.SegVal;
 		let SADN = DFC_STATE.scores[SA] ? DFC_STATE.scores[SA].DARTSNEEDED : 99;
-		if( SADN >= SBDN){continue;}
+		if( SADN >= SBDN ){continue;}
 		let matrix = defineTargetMatrix( segment.SegId );
 		if( !matrix ){continue;}
 
@@ -172,6 +172,7 @@ function getTargetMatrixRows( SB, dih ){
 			SADN: SADN,
 			segDF: segment.SegDF,
 			mtrxDN: targetEval.DN,
+			mtrxOO: targetEval.OO,
 			mtrxDF: targetEval.DF
 		});
 	}
@@ -213,9 +214,10 @@ function renderFinishTableHeader( thead ){
 	let row = document.createElement( "tr" );
 	appendTableCell( row, "th", "Segment" );
 	appendTableCell( row, "th", "DN" );
-	appendTableCell( row, "th", "DF" );
 	appendTableCell( row, "th", "DN mtrx" );
+	appendTableCell( row, "th", "DF" );
 	appendTableCell( row, "th", "DF mtrx" );
+	appendTableCell( row, "th", "OO mtrx" );
 	thead.appendChild( row );
 }
 //==============================================================================
@@ -224,9 +226,10 @@ function renderFinishTableBody( tbody, rows ){
 		let row = document.createElement( "tr" );
 		appendTableCell( row, "td", targetRow.seg );
 		appendTableCell( row, "td", targetRow.SADN );
-		appendTableCell( row, "td", targetRow.segDF );
 		appendTableCell( row, "td", targetRow.mtrxDN );
+		appendTableCell( row, "td", targetRow.segDF );
 		appendTableCell( row, "td", targetRow.mtrxDF );
+		appendTableCell( row, "td", targetRow.mtrxOO );
 		tbody.appendChild( row );
 	}
 }

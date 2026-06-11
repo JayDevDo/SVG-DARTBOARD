@@ -1,6 +1,6 @@
 /*=============================================================================
 targetMatrix.js
-Version 1.0.6 2026-06-10 20h00
+Version 1.0.6b 2026-06-10 22h00
 =============================================================================*/
 
 const MATRIX_CENTER_AXIS_SAME_DN_REWARD = 5; // %
@@ -8,20 +8,22 @@ const MATRIX_CENTER_AXIS_SAME_DN_REWARD = 5; // %
 //==============================================================================
 function scrAftrEval( SA, DIH ){
 	let scrInfo = DFC_STATE.scores[SA];
-	console.log(
-		"scrAftrEval | SA: ", SA, "DIH: ", DIH, 
-		"scrInfo-EZ: ", scrInfo.EZVISITPROFILE, 
-		"scrInfo-N: ", scrInfo.VISITPROFILE 
-	) ;
 	if( !scrInfo ){
 		return {
 			EZP: { DF: profileDFMap["BUST-BUST-BUST"][0], DN: profileDFMap["BUST-BUST-BUST"][1], ALIVE: false },
 			NVP: { DF: profileDFMap["BUST-BUST-BUST"][0], DN: profileDFMap["BUST-BUST-BUST"][1], ALIVE: false },
 			DN: 99,
 			ALIVE: false,
-			DF: profileDFMap["BUST-BUST-BUST"][0]
+			DF: profileDFMap["BUST-BUST-BUST"][0],
+			OO: 0
 		};
 	}
+	console.log(
+		"scrAftrEval | SA: ", SA, "DIH: ", DIH,
+		"scrInfo-EZ: ", scrInfo.EZVISITPROFILE,
+		"scrInfo-N: ", scrInfo.VISITPROFILE,
+		"scrInfo-OO: ", scrInfo.OUTOPTIONS
+	);
 
 	let retObj = {
 		EZP: {
@@ -35,7 +37,8 @@ function scrAftrEval( SA, DIH ){
 			ALIVE: profileDFMap[scrInfo.VISITPROFILE][1] <= DIH
 		},
 		DN: scrInfo.DARTSNEEDED,
-		ALIVE: scrInfo.DARTSNEEDED <= DIH
+		ALIVE: scrInfo.DARTSNEEDED <= DIH,
+		OO: scrInfo.OUTOPTIONS
 	};
 
 	retObj.DF = retObj.EZP.ALIVE ? retObj.EZP.DF : retObj.NVP.DF;
@@ -104,11 +107,11 @@ function defineTargetMatrix( targetSegId ){
 function getMatrixEval( matrix, SB, DIH ){
 	console.log( "getMatrixEval: starting" );
 
-	if( !DFC_STATE.dataLoaded ){return { DN: 999, DF: 999 };}
-	if( !matrix ){return { DN: 999, DF: 999 };}
+	if( !DFC_STATE.dataLoaded || !matrix ){return { DN: 999, DF: 999, OO: 0 };}
 
 	let ttlDN = 0;
 	let ttlDF = 0;
+	let ttlOO = 0;
 	let segsDone = 0;
 	let resMtrx = [];
 
@@ -126,21 +129,24 @@ function getMatrixEval( matrix, SB, DIH ){
 			let SA_Info = scrAftrEval( SA, DIH );
 			let segDN = SA_Info.DN;
 			let segDF = SA_Info.DF;
+			let segOO = SA_Info.OO;
 
 			if( segDN !== null && segDN !== undefined ){
 				segsDone++;
 				ttlDN = ttlDN + segDN;
 				ttlDF = ttlDF + segDF;
+				ttlOO = ttlOO + segOO;
 			}
 
 			resMtrx[rwIdx][colIdx] = [ segDN, segDF ];
 		}
 	}
 
-	if( segsDone === 0 ){return { DN: 999, DF: 999 };}
+	if( segsDone === 0 ){return { DN: 999, DF: 999, OO: 0 };}
 
 	let avgDN = ttlDN / segsDone;
 	let avgDF = ttlDF / segsDone;
+	let avgOO = ttlOO / segsDone;
 
 	if( resMtrx[0][1][0] < 99 && resMtrx[0][1][0] === resMtrx[1][1][0] && resMtrx[1][1][0] === resMtrx[2][1][0] ){
 		avgDF = avgDF * ( 1 - MATRIX_CENTER_AXIS_SAME_DN_REWARD / 100 );
@@ -148,7 +154,8 @@ function getMatrixEval( matrix, SB, DIH ){
 
 	return {
 		DN: parseFloat(( avgDN ).toFixed( 2 )),
-		DF: parseFloat(( Math.max( 0, avgDF ) ).toFixed( 2 ))
+		DF: parseFloat(( Math.max( 0, avgDF ) ).toFixed( 2 )),
+		OO: parseFloat(( avgOO ).toFixed( 2 ))
 	};
 }
 //==============================================================================
