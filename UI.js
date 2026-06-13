@@ -1,7 +1,7 @@
 /*
 =============================================================================
 UI.js
-Version 1.0.6b 2026-06-10 22h00
+Version 1.0.7 2026-06-13 16h00
 =============================================================================
 */
 
@@ -152,47 +152,80 @@ function renderActiveDartBoardAndTable(){
 function getTargetMatrixRows( SB, dih ){
 	console.log( "getTargetMatrixRows: starting" );
 	let rows = [];
-	const SBDN = DFC_STATE.scores[SB].DARTSNEEDED;
+	let scoreBeforeInfo = DFC_STATE.scores[SB];
+	if( !scoreBeforeInfo ){return rows;}
+	let SBDN = scoreBeforeInfo.DARTSNEEDED;
 
 	for( let segment of DFC_STATE.segments ){
 		if( segment.SegMulti <= 0 || segment.SegInRad === 2 ){continue;}
 		if( SBDN === 3 && segment.SegMulti === 2 ){continue;}
 
 		let SA = SB - segment.SegVal;
-		let SADN = DFC_STATE.scores[SA] ? DFC_STATE.scores[SA].DARTSNEEDED : 99;
+		let scoreAfterInfo = DFC_STATE.scores[SA];
+		let SADN = scoreAfterInfo ? scoreAfterInfo.DARTSNEEDED : 99;
 		if( SADN >= SBDN ){continue;}
-		let matrix = defineTargetMatrix( segment.SegId );
-		if( !matrix ){continue;}
 
-		let targetEval = getMatrixEval( matrix, SB, dih );
-		if( !targetEval || targetEval.DF >= 999 ){continue;}
+		let firstMatrix = defineTargetMatrix( segment.SegId );
+		if( !firstMatrix ){continue;}
+		let firstMatrixEval = getMatrixEval( firstMatrix, SB, dih );
+		if( !firstMatrixEval || firstMatrixEval.DF >= 999 ){continue;}
+
+		let finishSegment = null;
+		let secondMatrixEval = null;
+
+		if( SBDN === 2 ){
+			// if( dih < 2 || SADN !== 1 ){continue;}
+
+			for( let routeSegment of DFC_STATE.segments ){
+				if( routeSegment.SegVal === SA && routeSegment.SegMulti === 2 ){finishSegment = routeSegment; break;}
+			}
+
+			if( !finishSegment ){continue;}
+			let secondMatrix = defineTargetMatrix( finishSegment.SegId );
+			if( !secondMatrix ){continue;}
+			secondMatrixEval = getMatrixEval( secondMatrix, SA, dih - 1 );
+			if( !secondMatrixEval || secondMatrixEval.DF >= 999 ){continue;}
+		}
+		const d3DF = finishSegment ? finishSegment.SegDF : 99;
+		const ttlDF = segment.SegDF + d3DF;
+		const d3OO = secondMatrixEval ? secondMatrixEval.OO : 0;
 
 		rows.push({
-			seg: segment.SegId,
+			route: segment.SegId,
 			SADN: SADN,
-			segDF: segment.SegDF,
-			mtrxDN: targetEval.DN,
-			mtrxOO: targetEval.OO,
-			mtrxDF: targetEval.DF
+			firstSeg: segment.SegId,
+			firstSegDF: segment.SegDF,
+			firstMtrxDN: firstMatrixEval.DN,
+			firstMtrxDF: firstMatrixEval.DF,
+			firstMtrxOO: firstMatrixEval.OO,
+			secondSeg: finishSegment ? finishSegment.SegId : "",
+			secondSegDF: d3DF,
+			secondMtrxDF: secondMatrixEval ? secondMatrixEval.DF : 99,
+			secondMtrxOO: d3OO,
+			ttlDF: ttlDF
 		});
 	}
 
 	rows.sort( ( a, b )=>{
+		if( SBDN === 2 && a.ttlDF !== b.ttlDF ){ return a.ttlDF - b.ttlDF; }
 		if( a.SADN !== b.SADN ){return a.SADN - b.SADN;}
-		if( a.segDF !== b.segDF ){return a.segDF - b.segDF;}
-		if( a.mtrxDN !== b.mtrxDN ){return a.mtrxDN - b.mtrxDN;}
-		if( a.mtrxDF !== b.mtrxDF ){return a.mtrxDF - b.mtrxDF;}
-		return b.seg.localeCompare( a.seg );
+		if( a.firstSegDF !== b.firstSegDF ){return a.firstSegDF - b.firstSegDF;}
+		if( a.firstMtrxDF !== b.firstMtrxDF ){return a.firstMtrxDF - b.firstMtrxDF;}
+		if( a.secondSegDF !== null && b.secondSegDF !== null && a.secondSegDF !== b.secondSegDF ){return a.secondSegDF - b.secondSegDF;}
+		if( a.secondMtrxDF !== null && b.secondMtrxDF !== null && a.secondMtrxDF !== b.secondMtrxDF ){return a.secondMtrxDF - b.secondMtrxDF;}
+		return a.route.localeCompare( b.route );
 	});
 
 	return rows.slice( 0, MAX_FINISH_ROUTES );
 }
 //==============================================================================
 function renderFinishTable( dartNr ){
+	console.log( "renderFinishTable: starting" );
 	let dartBrdIdx = dartNr - 1;
 	let targetElement = DFC_UI.finishTableEls[dartBrdIdx];
 	let SB = getCurrentScore();
 	let dih = 3 - DFC_STATE.darts.length;
+	let scoreBeforeInfo = DFC_STATE.scores[SB];
 	let rows = getTargetMatrixRows( SB, dih );
 
 	clearElement( targetElement );
@@ -201,42 +234,59 @@ function renderFinishTable( dartNr ){
 	let table = document.createElement( "table" );
 	let thead = document.createElement( "thead" );
 	let tbody = document.createElement( "tbody" );
+	let SBDN = scoreBeforeInfo ? scoreBeforeInfo.DARTSNEEDED : 99;
 
-	renderFinishTableHeader( thead );
-	renderFinishTableBody( tbody, rows );
+	renderFinishTableHeader( thead, SBDN );
+	renderFinishTableBody( tbody, rows, SBDN );
 
 	table.appendChild( thead );
 	table.appendChild( tbody );
 	targetElement.appendChild( table );
 }
 //==============================================================================
-function renderFinishTableHeader( thead ){
+function renderFinishTableHeader( thead, SBDN ){
 	let row = document.createElement( "tr" );
-	appendTableCell( row, "th", "Segment" );
-	appendTableCell( row, "th", "DN" );
-	appendTableCell( row, "th", "DN mtrx" );
-	appendTableCell( row, "th", "DF" );
-	appendTableCell( row, "th", "DF mtrx" );
-	appendTableCell( row, "th", "OO mtrx" );
+	if( SBDN === 2 ){
+		appendTableCell( row, "th", "D1" );
+		appendTableCell( row, "th", "D1 DF" );
+		appendTableCell( row, "th", "D2" );
+		appendTableCell( row, "th", "D2 DF" );
+		appendTableCell( row, "th", "Ttl DF" );
+	}else{
+		appendTableCell( row, "th", "Dart" );
+		appendTableCell( row, "th", "DN" );
+		appendTableCell( row, "th", "DN mtrx" );
+		appendTableCell( row, "th", "DF" );
+		appendTableCell( row, "th", "DF mtrx" );
+		appendTableCell( row, "th", "OO mtrx" );
+	}
 	thead.appendChild( row );
 }
 //==============================================================================
-function renderFinishTableBody( tbody, rows ){
+function renderFinishTableBody( tbody, rows, SBDN ){
 	for( let targetRow of rows ){
 		let row = document.createElement( "tr" );
-		appendTableCell( row, "td", targetRow.seg );
-		appendTableCell( row, "td", targetRow.SADN );
-		appendTableCell( row, "td", targetRow.mtrxDN );
-		appendTableCell( row, "td", targetRow.segDF );
-		appendTableCell( row, "td", targetRow.mtrxDF );
-		appendTableCell( row, "td", targetRow.mtrxOO );
+		if( SBDN === 2 ){
+			appendTableCell( row, "td", targetRow.firstSeg );
+			appendTableCell( row, "td", targetRow.firstSegDF );
+			appendTableCell( row, "td", targetRow.secondSeg );
+			appendTableCell( row, "td", targetRow.secondSegDF );
+			appendTableCell( row, "td", targetRow.ttlDF );
+		}else{
+			appendTableCell( row, "td", targetRow.firstSeg );
+			appendTableCell( row, "td", targetRow.SADN );
+			appendTableCell( row, "td", targetRow.firstMtrxDN );
+			appendTableCell( row, "td", targetRow.firstSegDF );
+			appendTableCell( row, "td", targetRow.firstMtrxDF );
+			appendTableCell( row, "td", targetRow.firstMtrxOO );
+		}
 		tbody.appendChild( row );
 	}
 }
 //==============================================================================
 function appendTableCell( row, tagName, text ){
 	let cell = document.createElement( tagName );
-	if( typeof text === "number" ){text = ( Math.round( text * 100 ) / 100 ).toString();}
+	// if( typeof text === "number" ){text = ( Math.round( text * 100 ) / 100 ).toString();}
 	cell.textContent = text;
 	row.appendChild( cell );
 }
@@ -259,3 +309,4 @@ function renderMessages(){
 }
 //==============================================================================
 initDFC();
+//==============================================================================
