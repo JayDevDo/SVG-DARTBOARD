@@ -1,9 +1,9 @@
 /*=============================================================================
 targetMatrix.js
-Version 1.0.7 2026-06-13 16h00
+Version 1.1.0 2026-06-25 14h00
 =============================================================================*/
 
-const MATRIX_CENTER_AXIS_SAME_DN_REWARD = 5; // %
+const MATRIX_CENTER_AXIS_SAME_DN_REWARD = 10; // %
 
 //==============================================================================
 function scrAftrEval( SA, DIH ){
@@ -18,13 +18,14 @@ function scrAftrEval( SA, DIH ){
 			OO: 0
 		};
 	}
+	/*
 	console.log(
 		"scrAftrEval | SA: ", SA, "DIH: ", DIH,
 		"scrInfo-EZ: ", scrInfo.EZVISITPROFILE,
 		"scrInfo-N: ", scrInfo.VISITPROFILE,
 		"scrInfo-OO: ", scrInfo.OUTOPTIONS
 	);
-
+	*/
 	let retObj = {
 		EZP: {
 			DF: profileDFMap[scrInfo.EZVISITPROFILE][0],
@@ -42,66 +43,7 @@ function scrAftrEval( SA, DIH ){
 	};
 
 	retObj.DF = retObj.EZP.ALIVE ? retObj.EZP.DF : retObj.NVP.DF;
-
 	return retObj;
-}
-//==============================================================================
-function defineTargetMatrix( targetSegId ){
-	console.log( "defineTargetMatrix: starting" );
-
-	if( !DFC_STATE.dataLoaded ){return null;}
-	if( BULL_TARGET_MATRICES[targetSegId] ){return BULL_TARGET_MATRICES[targetSegId];}
-
-	let targetSegment = DFC_STATE.segmentById[targetSegId];
-	if( !targetSegment ){return null;}
-
-	let targetOrder = targetSegment.DartBoardOrder.toFixed( 2 );
-	let targetOrderParts = targetOrder.split( "." );
-
-	let targetWedge = parseInt( targetOrderParts[0] );
-	let targetRing = parseInt( targetOrderParts[1] );
-
-	let prevWedge = targetWedge - 1;
-	let nextWedge = targetWedge + 1;
-
-	let outerRing = targetRing - 1;
-	let innerRing = targetRing + 1;
-
-	if( prevWedge < 1 ){prevWedge = 20;}
-	if( nextWedge > 20 ){nextWedge = 1;}
-
-	let outerRingKey = "." + outerRing.toString().padStart( 2, "0" );
-	let targetRingKey = "." + targetRing.toString().padStart( 2, "0" );
-	let innerRingKey = "." + innerRing.toString().padStart( 2, "0" );
-
-	let matrix = [
-		[ "DNN", "DNN", "DNN" ],
-		[ "DNN", targetSegId, "DNN" ],
-		[ "DNN", "DNN", "DNN" ]
-	];
-
-	for( let segment of DFC_STATE.segments ){
-		let order = segment.DartBoardOrder.toFixed( 2 );
-
-		if( order.startsWith( prevWedge + "." ) ){
-			if( order.endsWith( outerRingKey ) ){matrix[0][0] = segment.SegId;}
-			if( order.endsWith( targetRingKey ) ){matrix[1][0] = segment.SegId;}
-			if( order.endsWith( innerRingKey ) ){matrix[2][0] = segment.SegId;}
-		}
-
-		if( order.startsWith( targetWedge + "." ) ){
-			if( order.endsWith( outerRingKey ) ){matrix[0][1] = segment.SegId;}
-			if( order.endsWith( innerRingKey ) ){matrix[2][1] = segment.SegId;}
-		}
-
-		if( order.startsWith( nextWedge + "." ) ){
-			if( order.endsWith( outerRingKey ) ){matrix[0][2] = segment.SegId;}
-			if( order.endsWith( targetRingKey ) ){matrix[1][2] = segment.SegId;}
-			if( order.endsWith( innerRingKey ) ){matrix[2][2] = segment.SegId;}
-		}
-	}
-
-	return matrix;
 }
 //==============================================================================
 function getMatrixEval( matrix, SB, DIH ){
@@ -149,7 +91,7 @@ function getMatrixEval( matrix, SB, DIH ){
 	let avgOO = ttlOO / segsDone;
 
 	if( resMtrx[0][1][0] < 99 && resMtrx[0][1][0] === resMtrx[1][1][0] && resMtrx[1][1][0] === resMtrx[2][1][0] ){
-		avgDF = avgDF * ( 1 - MATRIX_CENTER_AXIS_SAME_DN_REWARD / 100 );
+		avgDF = avgDF * ( ( 100 - MATRIX_CENTER_AXIS_SAME_DN_REWARD ) / 100 );
 	}
 
 	return {
@@ -167,8 +109,11 @@ function checkTargetMatrixSystem(){
 	let tests = [ "M20", "D20", "B20", "T20", "SBL", "DBL" ];
 
 	for( let targetSegId of tests ){
-		let matrix = defineTargetMatrix( targetSegId );
-		if( !matrix ){console.error( "targetMatrix CHECK: no matrix for target:", targetSegId ); continue;}
+		let segment = DFC_STATE.segmentById[targetSegId];
+		if( !segment ){console.error( "targetMatrix CHECK: missing target segment:", targetSegId ); continue;}
+
+		let matrix = segment.SegTargetMatrix;
+		if( !matrix ){console.error( "targetMatrix CHECK: no cached matrix for target:", targetSegId ); continue;}
 
 		for( let row of matrix ){
 			for( let segId of row ){
@@ -179,14 +124,14 @@ function checkTargetMatrixSystem(){
 		}
 	}
 
-	console.log( "targetMatrix CHECK: getMatrixEval( T20, 80, 2 )", getMatrixEval( defineTargetMatrix( "T20" ), 80, 2 ) );
-	console.log( "targetMatrix CHECK: getMatrixEval( T20, 80, 3 )", getMatrixEval( defineTargetMatrix( "T20" ), 80, 3 ) );
+	console.log( "targetMatrix CHECK: getMatrixEval( T20, 80, 2 )", getMatrixEval( DFC_STATE.segmentById["T20"].SegTargetMatrix, 80, 2 ) );
+	console.log( "targetMatrix CHECK: getMatrixEval( T20, 80, 3 )", getMatrixEval( DFC_STATE.segmentById["T20"].SegTargetMatrix, 80, 3 ) );
 	console.log( "--" );
-	console.log( "targetMatrix CHECK: getMatrixEval( B20, 80, 2 )", getMatrixEval( defineTargetMatrix( "B20" ), 80, 2 ) );
-	console.log( "targetMatrix CHECK: getMatrixEval( B20, 80, 3 )", getMatrixEval( defineTargetMatrix( "B20" ), 80, 3 ) );
+	console.log( "targetMatrix CHECK: getMatrixEval( B20, 80, 2 )", getMatrixEval( DFC_STATE.segmentById["B20"].SegTargetMatrix, 80, 2 ) );
+	console.log( "targetMatrix CHECK: getMatrixEval( B20, 80, 3 )", getMatrixEval( DFC_STATE.segmentById["B20"].SegTargetMatrix, 80, 3 ) );
 	console.log( "--" );
-	console.log( "targetMatrix CHECK: getMatrixEval( D20, 80, 2 )", getMatrixEval( defineTargetMatrix( "D20" ), 80, 2 ) );
-	console.log( "targetMatrix CHECK: getMatrixEval( D20, 80, 3 )", getMatrixEval( defineTargetMatrix( "D20" ), 80, 3 ) );
+	console.log( "targetMatrix CHECK: getMatrixEval( D20, 80, 2 )", getMatrixEval( DFC_STATE.segmentById["D20"].SegTargetMatrix, 80, 2 ) );
+	console.log( "targetMatrix CHECK: getMatrixEval( D20, 80, 3 )", getMatrixEval( DFC_STATE.segmentById["D20"].SegTargetMatrix, 80, 3 ) );
 
 	return true;
 }

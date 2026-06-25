@@ -1,7 +1,7 @@
-	/*
+/*
 =============================================================================
 init.js
-Version 1.0.6 2026-06-10 20h00
+Version 1.1.0 2026-06-25 14h00
 =============================================================================
 */
 
@@ -146,6 +146,63 @@ async function loadJsonFile( path ){
 	return await response.json();
 }
 //==============================================================================
+function defineTargetMatrix( targetSegId, segmentById = DFC_STATE.segmentById ){
+	console.log( "defineTargetMatrix: starting" );
+
+	if( BULL_TARGET_MATRICES[targetSegId] ){return BULL_TARGET_MATRICES[targetSegId];}
+
+	let targetSegment = segmentById[targetSegId];
+	if( !targetSegment ){return null;}
+
+	let targetOrder = targetSegment.DartBoardOrder.toFixed( 2 );
+	let targetOrderParts = targetOrder.split( "." );
+
+	let targetWedge = parseInt( targetOrderParts[0] );
+	let targetRing = parseInt( targetOrderParts[1] );
+
+	let prevWedge = targetWedge - 1;
+	let nextWedge = targetWedge + 1;
+
+	let outerRing = targetRing - 1;
+	let innerRing = targetRing + 1;
+
+	if( prevWedge < 1 ){prevWedge = 20;}
+	if( nextWedge > 20 ){nextWedge = 1;}
+
+	let outerRingKey = "." + outerRing.toString().padStart( 2, "0" );
+	let targetRingKey = "." + targetRing.toString().padStart( 2, "0" );
+	let innerRingKey = "." + innerRing.toString().padStart( 2, "0" );
+
+	let matrix = [
+		[ "DNN", "DNN", "DNN" ],
+		[ "DNN", targetSegId, "DNN" ],
+		[ "DNN", "DNN", "DNN" ]
+	];
+
+	for( let segment of DFC_STATE.segments ){
+		let order = segment.DartBoardOrder.toFixed( 2 );
+
+		if( order.startsWith( prevWedge + "." ) ){
+			if( order.endsWith( outerRingKey ) ){matrix[0][0] = segment.SegId;}
+			if( order.endsWith( targetRingKey ) ){matrix[1][0] = segment.SegId;}
+			if( order.endsWith( innerRingKey ) ){matrix[2][0] = segment.SegId;}
+		}
+
+		if( order.startsWith( targetWedge + "." ) ){
+			if( order.endsWith( outerRingKey ) ){matrix[0][1] = segment.SegId;}
+			if( order.endsWith( innerRingKey ) ){matrix[2][1] = segment.SegId;}
+		}
+
+		if( order.startsWith( nextWedge + "." ) ){
+			if( order.endsWith( outerRingKey ) ){matrix[0][2] = segment.SegId;}
+			if( order.endsWith( targetRingKey ) ){matrix[1][2] = segment.SegId;}
+			if( order.endsWith( innerRingKey ) ){matrix[2][2] = segment.SegId;}
+		}
+	}
+
+	return matrix;
+}
+//==============================================================================
 function createSegIdObject( segments ){
 	console.log( "createSegIdObject: starting" );
 	let segObj = {};
@@ -184,8 +241,13 @@ function createSegIdObject( segments ){
 		DartBoardOrder: 0,
 		SegTxt: "Dart Not Needed",
 		SegPath: "",
-		SegDF: DFfromProfile["DNN"]
+		SegDF: DFfromProfile["DNN"],
+		SegTargetMatrix: null
 	};
+
+	for( let segment of segments ){
+		segment.SegTargetMatrix = defineTargetMatrix( segment.SegId, segObj );
+	}
 
 	return segObj;
 }

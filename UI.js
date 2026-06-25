@@ -1,7 +1,7 @@
 /*
 =============================================================================
 UI.js
-Version 1.0.7 2026-06-13 16h00
+Version 1.1.0 2026-06-25 14h00
 =============================================================================
 */
 
@@ -115,17 +115,16 @@ function renderScoreInput(){DFC_UI.scoreDisplay.textContent = getScoreInput();}
 function renderScorePanels(){
 	for( let dartIndex = 0; dartIndex < 3; dartIndex++ ){
 		let SB = getSB_FromIdx( dartIndex );
-		let dartValue = getDartValue( dartIndex );
+		let segment = DFC_STATE.darts[dartIndex];
+		let dartValue = segment ? segment.SegVal : 0;
 		let scoreAfter = SB - dartValue;
 		DFC_UI.scoreBeforeEls[dartIndex].textContent = SB;
-		DFC_UI.segmentEls[dartIndex].textContent = getDartSegmentName( dartIndex );
+		DFC_UI.segmentEls[dartIndex].textContent = segment ? segment.SegId : "DNT";
 		DFC_UI.valueEls[dartIndex].textContent = dartValue;
-		DFC_UI.scoreAfterEls[dartIndex].textContent = getDartSegment( dartIndex ) ? scoreAfter : "";
+		DFC_UI.scoreAfterEls[dartIndex].textContent = segment ? scoreAfter : "";
 	}
-	DFC_UI.scoreFinal.textContent = getDisplayFinalScore();
+	DFC_UI.scoreFinal.textContent = getCurrentScore();
 }
-//==============================================================================
-function getDisplayFinalScore(){return getCurrentScore();}
 //==============================================================================
 function clearDartBoardsAndTables(){
 	for( let i = 1; i <= 3; i++ ){
@@ -158,20 +157,25 @@ function getTargetMatrixRows( SB, dih ){
 
 	for( let segment of DFC_STATE.segments ){
 		if( segment.SegMulti <= 0 || segment.SegInRad === 2 ){continue;}
-		if( SBDN === 3 && segment.SegMulti === 2 ){continue;}
+		if( SBDN === 3 && segment.SegMulti === 2 && segment.SegId !== "DBL" ){continue;}
 
 		let SA = SB - segment.SegVal;
+		if( SA === 0 && segment.SegMulti !== 2 ){continue;}
 		let scoreAfterInfo = DFC_STATE.scores[SA];
 		let SADN = scoreAfterInfo ? scoreAfterInfo.DARTSNEEDED : 99;
 		if( SADN >= SBDN ){continue;}
 
-		let firstMatrix = defineTargetMatrix( segment.SegId );
+		let firstMatrix = segment.SegTargetMatrix;
 		if( !firstMatrix ){continue;}
 		let firstMatrixEval = getMatrixEval( firstMatrix, SB, dih );
 		if( !firstMatrixEval || firstMatrixEval.DF >= 999 ){continue;}
 
 		let finishSegment = null;
 		let secondMatrixEval = null;
+		let routeSortRank = 9;
+		if( segment.SegMulti === 3 || segment.SegId === "SBL" || segment.SegId === "DBL" ){routeSortRank = 0;}
+		else if( segment.SegMulti === 1 ){routeSortRank = 1;}
+		else if( segment.SegMulti === 2 ){routeSortRank = 2;}
 
 		if( SBDN === 2 ){
 			// if( dih < 2 || SADN !== 1 ){continue;}
@@ -181,7 +185,7 @@ function getTargetMatrixRows( SB, dih ){
 			}
 
 			if( !finishSegment ){continue;}
-			let secondMatrix = defineTargetMatrix( finishSegment.SegId );
+			let secondMatrix = finishSegment.SegTargetMatrix;
 			if( !secondMatrix ){continue;}
 			secondMatrixEval = getMatrixEval( secondMatrix, SA, dih - 1 );
 			if( !secondMatrixEval || secondMatrixEval.DF >= 999 ){continue;}
@@ -192,6 +196,7 @@ function getTargetMatrixRows( SB, dih ){
 
 		rows.push({
 			route: segment.SegId,
+			routeSortRank: routeSortRank,
 			SADN: SADN,
 			firstSeg: segment.SegId,
 			firstSegDF: segment.SegDF,
@@ -207,7 +212,8 @@ function getTargetMatrixRows( SB, dih ){
 	}
 
 	rows.sort( ( a, b )=>{
-		if( SBDN === 2 && a.ttlDF !== b.ttlDF ){ return a.ttlDF - b.ttlDF; }
+		if( SBDN === 3 && a.routeSortRank !== b.routeSortRank ){return a.routeSortRank - b.routeSortRank;}
+		if( SBDN === 2 && a.ttlDF !== b.ttlDF ){return a.ttlDF - b.ttlDF;}
 		if( a.SADN !== b.SADN ){return a.SADN - b.SADN;}
 		if( a.firstSegDF !== b.firstSegDF ){return a.firstSegDF - b.firstSegDF;}
 		if( a.firstMtrxDF !== b.firstMtrxDF ){return a.firstMtrxDF - b.firstMtrxDF;}
@@ -235,6 +241,7 @@ function renderFinishTable( dartNr ){
 	let thead = document.createElement( "thead" );
 	let tbody = document.createElement( "tbody" );
 	let SBDN = scoreBeforeInfo ? scoreBeforeInfo.DARTSNEEDED : 99;
+	if( SBDN === 2 ){table.classList.add( "twoDartRouteTable" );}
 
 	renderFinishTableHeader( thead, SBDN );
 	renderFinishTableBody( tbody, rows, SBDN );

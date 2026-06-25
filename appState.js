@@ -1,7 +1,7 @@
 /*
 =============================================================================
 appState.js
-Version 1.0.6 2026-06-10 20h00
+Version 1.1.0 2026-06-25 14h00
 =============================================================================
 */
 
@@ -45,16 +45,8 @@ function setDartSegment( dartIndex, segment ){
 	return true;
 }
 //==============================================================================
-function getDartSegment( dartIndex ){return DFC_STATE.darts[dartIndex];}
-//==============================================================================
-function getDartSegmentName( dartIndex ){
-	let segment = getDartSegment( dartIndex );
-	if( !segment ){return "DNN";}
-	return segment.SegId;
-}
-//==============================================================================
 function getDartValue( dartIndex ){
-	let segment = getDartSegment( dartIndex );
+	let segment = DFC_STATE.darts[dartIndex];
 	if( !segment ){return 0;}
 	return segment.SegVal;
 }

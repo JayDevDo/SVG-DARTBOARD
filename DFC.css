@@ -1,7 +1,7 @@
 /* 
 =============================================================================
 DFC.css
-Version 1.0.5 2026-06-08 16h30
+Version 1.1.0 2026-06-25 14h00
 ============================================================================= 
 */
 
@@ -21,6 +21,8 @@ Version 1.0.5 2026-06-08 16h30
 	--accent-purple-1: #6600FF;
 	--accent-purple-2: #6633FF;
 	--accent-purple-3: #6666FF;
+	--route-d1-bg: #181828;
+	--route-d2-bg: #281818;
 	--danger: #FF0000;
 }
 
@@ -196,6 +198,14 @@ Finish tables
 .finishTableWrapper th, .finishTableWrapper td{ padding: 3px 4px; border-color: var(--line-soft); }
 .finishTableWrapper th{ background-color: var(--panel-bg-alt); color: var(--text-main); }
 .finishTableWrapper td{ background-color: var(--page-bg); color: var(--text-main); }
+.finishTableWrapper .twoDartRouteTable th:nth-child(1),
+.finishTableWrapper .twoDartRouteTable th:nth-child(2),
+.finishTableWrapper .twoDartRouteTable td:nth-child(1),
+.finishTableWrapper .twoDartRouteTable td:nth-child(2){ background-color: var(--route-d1-bg); }
+.finishTableWrapper .twoDartRouteTable th:nth-child(3),
+.finishTableWrapper .twoDartRouteTable th:nth-child(4),
+.finishTableWrapper .twoDartRouteTable td:nth-child(3),
+.finishTableWrapper .twoDartRouteTable td:nth-child(4){ background-color: var(--route-d2-bg); }
 /* 
 =============================================================================
 Messages
